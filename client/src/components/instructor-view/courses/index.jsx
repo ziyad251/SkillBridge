@@ -12,18 +12,16 @@ import {
   courseCurriculumInitialFormData,
   courseLandingInitialFormData,
 } from "@/config";
-import { InstructorContext } from "@/context/instructor-context";
 import { Delete, Edit } from "lucide-react";
-import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 
-function InstructorCourses({ listOfCourses }) {
+function InstructorCourses({
+  listOfCourses,
+  setCurrentEditedCourseId,
+  setCourseLandingFormData,
+  setCourseCurriculumFormData,
+}) {
   const navigate = useNavigate();
-  const {
-    setCurrentEditedCourseId,
-    setCourseLandingFormData,
-    setCourseCurriculumFormData,
-  } = useContext(InstructorContext);
 
   return (
     <Card>
@@ -55,13 +53,18 @@ function InstructorCourses({ listOfCourses }) {
             <TableBody>
               {listOfCourses && listOfCourses.length > 0
                 ? listOfCourses.map((course) => (
-                    <TableRow>
+                    <TableRow key={course?._id}>
                       <TableCell className="font-medium">
                         {course?.title}
                       </TableCell>
                       <TableCell>{course?.students?.length}</TableCell>
                       <TableCell>
-                        ${course?.students?.length * course?.pricing}
+                        $
+                        {(course?.students || []).reduce(
+                          (sum, student) =>
+                            sum + Number(student?.paidAmount ?? course?.pricing ?? 0),
+                          0
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button

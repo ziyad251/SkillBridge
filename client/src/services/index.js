@@ -21,6 +21,12 @@ export async function checkAuthService() {
   return data;
 }
 
+export async function fetchProfileService() {
+  const { data } = await axiosInstance.get("/auth/profile");
+
+  return data;
+}
+
 export async function mediaUploadService(formData, onProgressCallback) {
   const { data } = await axiosInstance.post("/media/upload", formData, {
     onUploadProgress: (progressEvent) => {
@@ -40,8 +46,9 @@ export async function mediaDeleteService(id) {
   return data;
 }
 
-export async function fetchInstructorCourseListService() {
-  const { data } = await axiosInstance.get(`/instructor/course/get`);
+export async function fetchInstructorCourseListService(instructorId) {
+  const query = instructorId ? `?instructorId=${instructorId}` : "";
+  const { data } = await axiosInstance.get(`/instructor/course/get${query}`);
 
   return data;
 }
@@ -104,22 +111,14 @@ export async function checkCoursePurchaseInfoService(courseId, studentId) {
   return data;
 }
 
-export async function createPaymentService(formData) {
-  const { data } = await axiosInstance.post(`/student/order/create`, formData);
+export async function createRazorpayOrderService(formData) {
+  const { data } = await axiosInstance.post(`/api/payment/create-order`, formData);
 
   return data;
 }
 
-export async function captureAndFinalizePaymentService(
-  paymentId,
-  payerId,
-  orderId
-) {
-  const { data } = await axiosInstance.post(`/student/order/capture`, {
-    paymentId,
-    payerId,
-    orderId,
-  });
+export async function verifyRazorpayPaymentService(formData) {
+  const { data } = await axiosInstance.post(`/api/payment/verify`, formData);
 
   return data;
 }
@@ -163,4 +162,57 @@ export async function resetCourseProgressService(userId, courseId) {
   );
 
   return data;
+}
+
+// Review Services
+export async function createReviewService(courseId, rating, review) {
+  const { data } = await axiosInstance.post(`/api/reviews/create`, {
+    courseId,
+    rating,
+    review,
+  });
+
+  return data;
+}
+
+export async function getReviewsByCourseService(courseId) {
+  const { data } = await axiosInstance.get(`/api/reviews/course/${courseId}`);
+
+  return data;
+}
+
+export async function updateReviewService(reviewId, rating, review) {
+  const { data } = await axiosInstance.put(`/api/reviews/update/${reviewId}`, {
+    rating,
+    review,
+  });
+
+  return data;
+}
+
+export async function deleteReviewService(reviewId) {
+  const { data } = await axiosInstance.delete(
+    `/api/reviews/delete/${reviewId}`
+  );
+
+  return data;
+}
+
+// Certificate Services
+export async function downloadCertificateService(courseId) {
+  const response = await axiosInstance.get(`/api/certificate/${courseId}`, {
+    responseType: "blob",
+  });
+
+  // Create blob and trigger download
+  const url = window.URL.createObjectURL(new Blob([response.data]));
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", `certificate-${courseId}.pdf`);
+  document.body.appendChild(link);
+  link.click();
+  link.parentElement.removeChild(link);
+  window.URL.revokeObjectURL(url);
+
+  return { success: true };
 }

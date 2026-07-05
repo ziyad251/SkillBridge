@@ -1,20 +1,21 @@
-const paypal = require("../../helpers/paypal");
+const crypto = require("crypto");
+const Razorpay = require("razorpay");
 const Order = require("../../models/Order");
 const Course = require("../../models/Course");
 const StudentCourses = require("../../models/StudentCourses");
 
-const createOrder = async (req, res) => {
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID || "RAZORPAY_KEY_ID",
+  key_secret: process.env.RAZORPAY_SECRET || "RAZORPAY_SECRET",
+});
+
+const createRazorpayOrder = async (req, res) => {
   try {
     const {
+      amount,
       userId,
       userName,
       userEmail,
-      orderStatus,
-      paymentMethod,
-      paymentStatus,
-      orderDate,
-      paymentId,
-      payerId,
       instructorId,
       instructorName,
       courseImage,
@@ -23,92 +24,58 @@ const createOrder = async (req, res) => {
       coursePricing,
     } = req.body;
 
-    // 🔥 VERY IMPORTANT — Ensure numeric
-    const numericPrice = Number(coursePricing);
+    const requestedAmount = Number(amount);
+    const numericPrice = Number(coursePricing || amount);
 
-    if (!numericPrice || numericPrice <= 0) {
+    if (!requestedAmount || requestedAmount <= 0 || !numericPrice || numericPrice <= 0) {
       return res.status(400).json({
         success: false,
-        message: "Invalid course price",
+        message: "Invalid amount",
       });
     }
 
-    const formattedPrice = numericPrice.toFixed(2);
+    const newlyCreatedCourseOrder = new Order({
+      userId,
+      userName,
+      userEmail,
+      orderStatus: "pending",
+      paymentMethod: "razorpay",
+      paymentStatus: "initiated",
+      orderDate: new Date(),
+      paymentId: "",
+      payerId: "",
+      instructorId,
+      instructorName,
+      courseImage,
+      courseTitle,
+      courseId,
+      coursePricing: numericPrice,
+    });
 
-    const create_payment_json = {
-      intent: "sale",
-      payer: {
-        payment_method: "paypal",
+    await newlyCreatedCourseOrder.save();
+
+    const razorpayOrder = await razorpay.orders.create({
+      amount: Math.round(requestedAmount * 100),
+      currency: "INR",
+      receipt: `receipt_${newlyCreatedCourseOrder._id}`,
+      notes: {
+        orderDbId: String(newlyCreatedCourseOrder._id),
       },
-      redirect_urls: {
-        return_url: `${process.env.CLIENT_URL}/payment-return`,
-        cancel_url: `${process.env.CLIENT_URL}/payment-cancel`,
+    });
+
+    newlyCreatedCourseOrder.paymentId = razorpayOrder.id;
+    await newlyCreatedCourseOrder.save();
+
+    return res.status(201).json({
+      success: true,
+      data: {
+        order_id: razorpayOrder.id,
+        amount: razorpayOrder.amount,
+        currency: razorpayOrder.currency,
       },
-      transactions: [
-        {
-          item_list: {
-            items: [
-              {
-                name: courseTitle,
-                sku: courseId,
-                price: formattedPrice, // ✅ string
-                currency: "USD",
-                quantity: 1,
-              },
-            ],
-          },
-          amount: {
-            currency: "USD",
-            total: formattedPrice, // ✅ string and matches price
-          },
-          description: courseTitle,
-        },
-      ],
-    };
-
-    paypal.payment.create(create_payment_json, async (error, paymentInfo) => {
-      if (error) {
-        console.log("PayPal Error:", error.response || error);
-        return res.status(500).json({
-          success: false,
-          message: "Error while creating paypal payment!",
-        });
-      }
-
-      const newlyCreatedCourseOrder = new Order({
-        userId,
-        userName,
-        userEmail,
-        orderStatus,
-        paymentMethod,
-        paymentStatus,
-        orderDate,
-        paymentId,
-        payerId,
-        instructorId,
-        instructorName,
-        courseImage,
-        courseTitle,
-        courseId,
-        coursePricing: numericPrice,
-      });
-
-      await newlyCreatedCourseOrder.save();
-
-      const approveUrl = paymentInfo.links.find(
-        (link) => link.rel === "approval_url"
-      )?.href;
-
-      return res.status(201).json({
-        success: true,
-        data: {
-          approveUrl,
-          orderId: newlyCreatedCourseOrder._id,
-        },
-      });
     });
   } catch (err) {
-    console.log("Create Order Error:", err);
+    console.log("Create Razorpay Order Error:", err);
     return res.status(500).json({
       success: false,
       message: "Some error occured!",
@@ -116,49 +83,72 @@ const createOrder = async (req, res) => {
   }
 };
 
-
-const capturePaymentAndFinalizeOrder = async (req, res) => {
+const verifyRazorpayPayment = async (req, res) => {
   try {
-    const { paymentId, payerId, orderId } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
+      req.body;
 
-    let order = await Order.findById(orderId);
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing payment verification fields",
+      });
+    }
+
+    const generatedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_SECRET || "RAZORPAY_SECRET")
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest("hex");
+
+    if (generatedSignature !== razorpay_signature) {
+      return res.status(400).json({
+        success: false,
+        message: "Payment verification failed",
+      });
+    }
+
+    let order = await Order.findOne({ paymentId: razorpay_order_id });
 
     if (!order) {
       return res.status(404).json({
         success: false,
-        message: "Order can not be found",
+        message: "Order cannot be found",
       });
     }
 
     order.paymentStatus = "paid";
     order.orderStatus = "confirmed";
-    order.paymentId = paymentId;
-    order.payerId = payerId;
+    order.payerId = razorpay_payment_id;
 
     await order.save();
 
-    //update out student course model
     const studentCourses = await StudentCourses.findOne({
       userId: order.userId,
     });
 
     if (studentCourses) {
-      studentCourses.courses.push({
-        courseId: order.courseId,
-        title: order.courseTitle,
-        instructorId: order.instructorId,
-        instructorName: order.instructorName,
-        dateOfPurchase: order.orderDate,
-        courseImage: order.courseImage,
-      });
+      const alreadyPurchased = studentCourses.courses.some(
+        (course) => String(course.courseId) === String(order.courseId)
+      );
 
-      await studentCourses.save();
+      if (!alreadyPurchased) {
+        studentCourses.courses.push({
+          courseId: String(order.courseId),
+          title: order.courseTitle,
+          instructorId: order.instructorId,
+          instructorName: order.instructorName,
+          dateOfPurchase: order.orderDate,
+          courseImage: order.courseImage,
+        });
+
+        await studentCourses.save();
+      }
     } else {
       const newStudentCourses = new StudentCourses({
         userId: order.userId,
         courses: [
           {
-            courseId: order.courseId,
+            courseId: String(order.courseId),
             title: order.courseTitle,
             instructorId: order.instructorId,
             instructorName: order.instructorName,
@@ -171,17 +161,25 @@ const capturePaymentAndFinalizeOrder = async (req, res) => {
       await newStudentCourses.save();
     }
 
-    //update the course schema students
-    await Course.findByIdAndUpdate(order.courseId, {
-      $addToSet: {
-        students: {
-          studentId: order.userId,
+    const course = await Course.findById(order.courseId);
+
+    if (course) {
+      const students = course.students || [];
+      const alreadyEnrolled = students.some(
+        (student) => String(student.studentId) === String(order.userId)
+      );
+
+      if (!alreadyEnrolled) {
+        students.push({
+          studentId: String(order.userId),
           studentName: order.userName,
           studentEmail: order.userEmail,
-          paidAmount: order.coursePricing,
-        },
-      },
-    });
+          paidAmount: String(order.coursePricing),
+        });
+        course.students = students;
+        await course.save();
+      }
+    }
 
     res.status(200).json({
       success: true,
@@ -197,4 +195,4 @@ const capturePaymentAndFinalizeOrder = async (req, res) => {
   }
 };
 
-module.exports = { createOrder, capturePaymentAndFinalizeOrder };
+module.exports = { createRazorpayOrder, verifyRazorpayPayment };

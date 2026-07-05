@@ -1,3 +1,4 @@
+import BrandLogo from "@/components/layout/brand-logo";
 import CommonForm from "@/components/common-form";
 import {
   Card,
@@ -8,21 +9,24 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { signInFormControls, signUpFormControls } from "@/config";
-import { AuthContext } from "@/context/auth-context";
-import { GraduationCap } from "lucide-react";
-import { useContext, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
-function AuthPage() {
+function AuthPage({
+  signInFormData,
+  setSignInFormData,
+  signUpFormData,
+  setSignUpFormData,
+  handleRegisterUser,
+  handleLoginUser,
+}) {
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("signin");
-  const {
-    signInFormData,
-    setSignInFormData,
-    signUpFormData,
-    setSignUpFormData,
-    handleRegisterUser,
-    handleLoginUser,
-  } = useContext(AuthContext);
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab === "signup") setActiveTab("signup");
+  }, [searchParams]);
 
   function handleTabChange(value) {
     setActiveTab(value);
@@ -45,29 +49,27 @@ function AuthPage() {
     );
   }
 
-  console.log(signInFormData);
-
   return (
-    <div className="flex flex-col min-h-screen">
-      <header className="px-4 lg:px-6 h-14 flex items-center border-b">
-        <Link to={"/"} className="flex items-center justify-center">
-          <GraduationCap className="h-8 w-8 mr-4" />
-          <span className="font-extrabold text-xl">LMS LEARN</span>
-        </Link>
+    <div className="lms-page-shell lms-gradient-hero flex min-h-screen flex-col">
+      <header className="sticky top-0 z-50 border-b border-border/50 bg-background/70 px-4 backdrop-blur-xl lg:px-6">
+        <div className="mx-auto flex h-14 max-w-7xl items-center">
+          <BrandLogo to="/" />
+        </div>
       </header>
-      <div className="flex items-center justify-center min-h-screen bg-background">
+
+      <div className="flex flex-1 items-center justify-center px-4 py-12">
         <Tabs
           value={activeTab}
           defaultValue="signin"
           onValueChange={handleTabChange}
           className="w-full max-w-md"
         >
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-2 bg-muted/50">
             <TabsTrigger value="signin">Sign In</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
           </TabsList>
           <TabsContent value="signin">
-            <Card className="p-6 space-y-4">
+            <Card className="mt-4 border-border/60 bg-card/80 shadow-xl shadow-indigo-500/5 backdrop-blur-xl">
               <CardHeader>
                 <CardTitle>Sign in to your account</CardTitle>
                 <CardDescription>
@@ -87,7 +89,7 @@ function AuthPage() {
             </Card>
           </TabsContent>
           <TabsContent value="signup">
-            <Card className="p-6 space-y-4">
+            <Card className="mt-4 border-border/60 bg-card/80 shadow-xl shadow-indigo-500/5 backdrop-blur-xl">
               <CardHeader>
                 <CardTitle>Create a new account</CardTitle>
                 <CardDescription>

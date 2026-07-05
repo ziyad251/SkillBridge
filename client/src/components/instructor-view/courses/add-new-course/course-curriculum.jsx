@@ -6,24 +6,22 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import VideoPlayer from "@/components/video-player";
 import { courseCurriculumInitialFormData } from "@/config";
-import { InstructorContext } from "@/context/instructor-context";
 import {
   mediaBulkUploadService,
   mediaDeleteService,
   mediaUploadService,
 } from "@/services";
 import { Upload } from "lucide-react";
-import { useContext, useRef } from "react";
+import { useRef } from "react";
 
-function CourseCurriculum() {
-  const {
-    courseCurriculumFormData,
-    setCourseCurriculumFormData,
-    mediaUploadProgress,
-    setMediaUploadProgress,
-    mediaUploadProgressPercentage,
-    setMediaUploadProgressPercentage,
-  } = useContext(InstructorContext);
+function CourseCurriculum({
+  courseCurriculumFormData,
+  setCourseCurriculumFormData,
+  mediaUploadProgress,
+  setMediaUploadProgress,
+  mediaUploadProgressPercentage,
+  setMediaUploadProgressPercentage,
+}) {
 
   const bulkUploadInputRef = useRef(null);
 
@@ -37,16 +35,19 @@ function CourseCurriculum() {
   }
 
   function handleCourseTitleChange(event, currentIndex) {
+    const newTitle = event.target.value;
+    console.log(`📝 [TITLE] Lecture ${currentIndex} title changed to: "${newTitle}"`);
     let cpyCourseCurriculumFormData = [...courseCurriculumFormData];
     cpyCourseCurriculumFormData[currentIndex] = {
       ...cpyCourseCurriculumFormData[currentIndex],
-      title: event.target.value,
+      title: newTitle,
     };
 
     setCourseCurriculumFormData(cpyCourseCurriculumFormData);
   }
 
   function handleFreePreviewChange(currentValue, currentIndex) {
+    console.log(`🎬 [PREVIEW] Lecture ${currentIndex} freePreview set to: ${currentValue}`);
     let cpyCourseCurriculumFormData = [...courseCurriculumFormData];
     cpyCourseCurriculumFormData[currentIndex] = {
       ...cpyCourseCurriculumFormData[currentIndex],
@@ -58,6 +59,7 @@ function CourseCurriculum() {
 
   async function handleSingleLectureUpload(event, currentIndex) {
     const selectedFile = event.target.files[0];
+    console.log(`📹 [UPLOAD] Single lecture upload started at index ${currentIndex}:`, selectedFile?.name);
 
     if (selectedFile) {
       const videoFormData = new FormData();
@@ -69,18 +71,23 @@ function CourseCurriculum() {
           videoFormData,
           setMediaUploadProgressPercentage
         );
+        console.log(`📹 [UPLOAD] Upload response:`, response);
+
         if (response.success) {
           let cpyCourseCurriculumFormData = [...courseCurriculumFormData];
           cpyCourseCurriculumFormData[currentIndex] = {
             ...cpyCourseCurriculumFormData[currentIndex],
-            videoUrl: response?.data?.url,
+            videoUrl: response?.data?.url || response?.data?.secure_url,
             public_id: response?.data?.public_id,
           };
+          console.log(`✅ [UPLOAD] Lecture ${currentIndex} updated:`, cpyCourseCurriculumFormData[currentIndex]);
           setCourseCurriculumFormData(cpyCourseCurriculumFormData);
-          setMediaUploadProgress(false);
         }
       } catch (error) {
-        console.log(error);
+        console.log("❌ [UPLOAD] Error:", error);
+      } finally {
+        setMediaUploadProgress(false);
+        setMediaUploadProgressPercentage(0);
       }
     }
   }
@@ -154,7 +161,7 @@ function CourseCurriculum() {
         cpyCourseCurriculumFormdata = [
           ...cpyCourseCurriculumFormdata,
           ...response?.data.map((item, index) => ({
-            videoUrl: item?.url,
+            videoUrl: item?.url || item?.secure_url,
             public_id: item?.public_id,
             title: `Lecture ${
               cpyCourseCurriculumFormdata.length + (index + 1)
@@ -163,10 +170,12 @@ function CourseCurriculum() {
           })),
         ];
         setCourseCurriculumFormData(cpyCourseCurriculumFormdata);
-        setMediaUploadProgress(false);
       }
     } catch (e) {
       console.log(e);
+    } finally {
+      setMediaUploadProgress(false);
+      setMediaUploadProgressPercentage(0);
     }
   }
 
@@ -201,8 +210,7 @@ function CourseCurriculum() {
             onChange={handleMediaBulkUpload}
           />
           <Button
-            as="label"
-            htmlFor="bulk-media-upload"
+            type="button"
             variant="outline"
             className="cursor-pointer"
             onClick={handleOpenBulkUploadDialog}
@@ -227,7 +235,7 @@ function CourseCurriculum() {
         ) : null}
         <div className="mt-4 space-y-4">
           {courseCurriculumFormData.map((curriculumItem, index) => (
-            <div className="border p-5 rounded-md">
+            <div key={curriculumItem?.public_id || index} className="border p-5 rounded-md">
               <div className="flex gap-5 items-center">
                 <h3 className="font-semibold">Lecture {index + 1}</h3>
                 <Input

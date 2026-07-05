@@ -1,4 +1,6 @@
 const express = require("express");
+const fs = require("fs");
+const path = require("path");
 const multer = require("multer");
 const {
   uploadMediaToCloudinary,
@@ -7,10 +9,22 @@ const {
 
 const router = express.Router();
 
-const upload = multer({ dest: "uploads/" });
+const uploadDir = path.join(__dirname, "../../uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const upload = multer({ dest: uploadDir });
 
 router.post("/upload", upload.single("file"), async (req, res) => {
   try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "No file uploaded",
+      });
+    }
+
     const result = await uploadMediaToCloudinary(req.file.path);
     res.status(200).json({
       success: true,
@@ -49,6 +63,13 @@ router.delete("/delete/:id", async (req, res) => {
 
 router.post("/bulk-upload", upload.array("files", 10), async (req, res) => {
   try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No files uploaded",
+      });
+    }
+
     const uploadPromises = req.files.map((fileItem) =>
       uploadMediaToCloudinary(fileItem.path)
     );

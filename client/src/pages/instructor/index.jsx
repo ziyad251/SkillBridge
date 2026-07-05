@@ -2,26 +2,33 @@ import InstructorCourses from "@/components/instructor-view/courses";
 import InstructorDashboard from "@/components/instructor-view/dashboard";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { AuthContext } from "@/context/auth-context";
-import { InstructorContext } from "@/context/instructor-context";
 import { fetchInstructorCourseListService } from "@/services";
 import { BarChart, Book, LogOut } from "lucide-react";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 
-function InstructorDashboardpage() {
+function InstructorDashboardpage({
+  auth,
+  resetCredentials,
+  instructorCoursesList,
+  setInstructorCoursesList,
+  setCurrentEditedCourseId,
+  setCourseLandingFormData,
+  setCourseCurriculumFormData,
+}) {
   const [activeTab, setActiveTab] = useState("dashboard");
-  const { resetCredentials } = useContext(AuthContext);
-  const { instructorCoursesList, setInstructorCoursesList } =
-    useContext(InstructorContext);
+  const location = useLocation();
 
   async function fetchAllCourses() {
-    const response = await fetchInstructorCourseListService();
+    const response = await fetchInstructorCourseListService(auth?.user?._id);
     if (response?.success) setInstructorCoursesList(response?.data);
   }
 
   useEffect(() => {
-    fetchAllCourses();
-  }, []);
+    if (auth?.user?._id) {
+      fetchAllCourses();
+    }
+  }, [auth?.user?._id, location.pathname]);
 
   const menuItems = [
     {
@@ -34,7 +41,14 @@ function InstructorDashboardpage() {
       icon: Book,
       label: "Courses",
       value: "courses",
-      component: <InstructorCourses listOfCourses={instructorCoursesList} />,
+      component: (
+        <InstructorCourses
+          listOfCourses={instructorCoursesList}
+          setCurrentEditedCourseId={setCurrentEditedCourseId}
+          setCourseLandingFormData={setCourseLandingFormData}
+          setCourseCurriculumFormData={setCourseCurriculumFormData}
+        />
+      ),
     },
     {
       icon: LogOut,
@@ -49,13 +63,13 @@ function InstructorDashboardpage() {
     sessionStorage.clear();
   }
 
-  console.log(instructorCoursesList, "instructorCoursesList");
-
   return (
-    <div className="flex h-full min-h-screen bg-gray-100">
-      <aside className="w-64 bg-white shadow-md hidden md:block">
-        <div className="p-4">
-          <h2 className="text-2xl font-bold mb-4">Instructor View</h2>
+    <div className="lms-page-shell flex min-h-screen">
+      <aside className="sticky top-0 hidden h-screen w-64 border-r border-border/60 bg-card/50 backdrop-blur-sm md:block">
+        <div className="p-5">
+          <h2 className="text-xl font-extrabold tracking-tight mb-5">
+            Instructor View
+          </h2>
           <nav>
             {menuItems.map((menuItem) => (
               <Button
@@ -75,12 +89,15 @@ function InstructorDashboardpage() {
           </nav>
         </div>
       </aside>
-      <main className="flex-1 p-8 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
+          <h1 className="text-3xl font-bold tracking-tight mb-2">Dashboard</h1>
+          <p className="text-muted-foreground mb-8">
+            My Courses · Revenue Summary · Students Enrolled
+          </p>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             {menuItems.map((menuItem) => (
-              <TabsContent value={menuItem.value}>
+              <TabsContent key={menuItem.value} value={menuItem.value}>
                 {menuItem.component !== null ? menuItem.component : null}
               </TabsContent>
             ))}

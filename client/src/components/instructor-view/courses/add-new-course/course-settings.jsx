@@ -2,19 +2,16 @@ import MediaProgressbar from "@/components/media-progress-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { InstructorContext } from "@/context/instructor-context";
 import { mediaUploadService } from "@/services";
-import { useContext } from "react";
 
-function CourseSettings() {
-  const {
-    courseLandingFormData,
-    setCourseLandingFormData,
-    mediaUploadProgress,
-    setMediaUploadProgress,
-    mediaUploadProgressPercentage,
-    setMediaUploadProgressPercentage,
-  } = useContext(InstructorContext);
+function CourseSettings({
+  courseLandingFormData,
+  setCourseLandingFormData,
+  mediaUploadProgress,
+  setMediaUploadProgress,
+  mediaUploadProgressPercentage,
+  setMediaUploadProgressPercentage,
+}) {
 
   async function handleImageUploadChange(event) {
     const selectedImage = event.target.files[0];
@@ -32,12 +29,14 @@ function CourseSettings() {
         if (response.success) {
           setCourseLandingFormData({
             ...courseLandingFormData,
-            image: response.data.url,
+            image: response.data.url || response.data.secure_url,
           });
-          setMediaUploadProgress(false);
         }
       } catch (e) {
         console.log(e);
+      } finally {
+        setMediaUploadProgress(false);
+        setMediaUploadProgressPercentage(0);
       }
     }
   }
@@ -57,7 +56,11 @@ function CourseSettings() {
       </div>
       <CardContent>
         {courseLandingFormData?.image ? (
-          <img src={courseLandingFormData.image} />
+          <img
+            src={courseLandingFormData.image}
+            alt="Course"
+            className="w-full rounded-md border object-cover"
+          />
         ) : (
           <div className="flex flex-col gap-3">
             <Label>Upload Course Image</Label>

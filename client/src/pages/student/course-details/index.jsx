@@ -10,32 +10,37 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import VideoPlayer from "@/components/video-player";
-import { AuthContext } from "@/context/auth-context";
-import { StudentContext } from "@/context/student-context";
+import ReviewForm from "@/components/reviews/review-form";
+import ReviewList from "@/components/reviews/review-list";
 import {
-  createPaymentService,
+  createRazorpayOrderService,
   fetchStudentViewCourseDetailsService,
+  verifyRazorpayPaymentService,
+  getReviewsByCourseService,
+  checkCoursePurchaseInfoService,
 } from "@/services";
 import { CheckCircle, Globe, Lock, PlayCircle } from "lucide-react";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
-function StudentViewCourseDetailsPage() {
-  const {
-    studentViewCourseDetails,
-    setStudentViewCourseDetails,
-    currentCourseDetailsId,
-    setCurrentCourseDetailsId,
-    loadingState,
-    setLoadingState,
-  } = useContext(StudentContext);
-
-  const { auth } = useContext(AuthContext);
+function StudentViewCourseDetailsPage({
+  studentViewCourseDetails,
+  setStudentViewCourseDetails,
+  currentCourseDetailsId,
+  setCurrentCourseDetailsId,
+  loadingState,
+  setLoadingState,
+  auth,
+}) {
 
   const [displayCurrentVideoFreePreview, setDisplayCurrentVideoFreePreview] =
     useState(null);
   const [showFreePreviewDialog, setShowFreePreviewDialog] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [averageRating, setAverageRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [isEnrolled, setIsEnrolled] = useState(false);
 
   const navigate = useNavigate();
   const { id } = useParams();
@@ -53,6 +58,16 @@ function StudentViewCourseDetailsPage() {
 
       if (response?.success) {
         setStudentViewCourseDetails(response?.data);
+        await fetchReviews(currentCourseDetailsId);
+
+        // Check if user is enrolled
+        if (auth?.user?._id) {
+          const purchaseInfo = await checkCoursePurchaseInfoService(
+            currentCourseDetailsId,
+            auth.user._id
+          );
+          setIsEnrolled(purchaseInfo?.success && purchaseInfo?.data?.isPurchased);
+        }
       } else {
         setStudentViewCourseDetails(null);
       }
@@ -61,6 +76,19 @@ function StudentViewCourseDetailsPage() {
       setStudentViewCourseDetails(null);
     } finally {
       setLoadingState(false);
+    }
+  }
+
+  async function fetchReviews(courseId) {
+    try {
+      const response = await getReviewsByCourseService(courseId);
+      if (response?.success) {
+        setReviews(response?.data?.reviews || []);
+        setAverageRating(response?.data?.averageRating || 0);
+        setTotalReviews(response?.data?.totalReviews || 0);
+      }
+    } catch (error) {
+      console.error("Fetch Reviews Error:", error);
     }
   }
 
@@ -91,15 +119,10 @@ function StudentViewCourseDetailsPage() {
       setIsProcessingPayment(true);
 
       const paymentPayload = {
+        amount: Number(studentViewCourseDetails?.pricing),
         userId: auth?.user?._id,
         userName: auth?.user?.userName,
         userEmail: auth?.user?.userEmail,
-        orderStatus: "pending",
-        paymentMethod: "paypal",
-        paymentStatus: "initiated",
-        orderDate: new Date(),
-        paymentId: "",
-        payerId: "",
         instructorId: studentViewCourseDetails?.instructorId,
         instructorName: studentViewCourseDetails?.instructorName,
         courseImage: studentViewCourseDetails?.image,
@@ -108,28 +131,58 @@ function StudentViewCourseDetailsPage() {
         coursePricing: studentViewCourseDetails?.pricing,
       };
 
-      console.log("Payment Payload:", paymentPayload);
+      const response = await createRazorpayOrderService(paymentPayload);
 
-      const response = await createPaymentService(paymentPayload);
+      if (!response?.success || !response?.data?.order_id) {
+        alert("Payment creation failed. Check backend.");
+        return;
+      }
 
-      console.log("Payment Response:", response);
+      const razorpayKey =
+        import.meta.env.VITE_RAZORPAY_KEY_ID ||
+        import.meta.env.REACT_APP_RAZORPAY_KEY_ID ||
+        "RAZORPAY_KEY_ID";
 
-      if (response?.success && response?.data?.approveUrl) {
+      if (!window.Razorpay) {
+        alert("Razorpay SDK failed to load");
+        return;
+      }
 
-  // 🔥 SAVE ORDER ID BEFORE REDIRECT
-  sessionStorage.setItem(
-    "currentOrderId",
-    JSON.stringify(response.data.orderId)
-  );
+      const options = {
+        key: razorpayKey,
+        amount: response.data.amount,
+        currency: response.data.currency,
+        name: "My Project",
+        description: "Test Payment",
+        order_id: response.data.order_id,
+        handler: async function (razorpayResponse) {
+          const verifyResponse = await verifyRazorpayPaymentService({
+            razorpay_order_id: razorpayResponse.razorpay_order_id,
+            razorpay_payment_id: razorpayResponse.razorpay_payment_id,
+            razorpay_signature: razorpayResponse.razorpay_signature,
+          });
 
-  console.log("Saved Order ID:", response.data.orderId);
+          if (verifyResponse?.success) {
+            alert("Payment successful! Course unlocked.");
+            navigate("/student-courses");
+          } else {
+            alert("Payment verification failed.");
+          }
+        },
+        prefill: {
+          name: auth?.user?.userName || "",
+          email: auth?.user?.userEmail || "",
+        },
+        theme: {
+          color: "#111827",
+        },
+      };
 
-  window.location.href = response.data.approveUrl;
-
-} else {
-  alert("Payment creation failed. Check backend.");
-}
-
+      const razorpayInstance = new window.Razorpay(options);
+      razorpayInstance.on("payment.failed", function () {
+        alert("Payment failed. Please try again.");
+      });
+      razorpayInstance.open();
     } catch (error) {
       console.error("Payment Error:", error);
       alert("Payment Error. See console.");
@@ -165,10 +218,24 @@ function StudentViewCourseDetailsPage() {
     }
   }, [location.pathname]);
 
-  if (loadingState) return <Skeleton />;
+  if (loadingState) {
+    return (
+      <div className="mx-auto max-w-7xl space-y-4 p-4 lg:p-8">
+        <Skeleton className="h-48 w-full rounded-xl" />
+        <Skeleton className="h-64 w-full rounded-xl" />
+      </div>
+    );
+  }
 
   if (!studentViewCourseDetails) {
-    return <h1 className="text-2xl font-bold p-5">Course Not Found</h1>;
+    return (
+      <div className="p-8 text-center">
+        <h1 className="text-2xl font-bold">Course Not Found</h1>
+        <p className="mt-2 text-muted-foreground">
+          This course may have been removed or is unavailable.
+        </p>
+      </div>
+    );
   }
 
   const freePreviewIndex =
@@ -177,9 +244,8 @@ function StudentViewCourseDetailsPage() {
     ) ?? -1;
 
   return (
-    <div className="mx-auto p-4">
-      {/* HEADER */}
-      <div className="bg-gray-900 text-white p-8 rounded-t-lg">
+    <div className="mx-auto max-w-7xl overflow-x-hidden p-4 lg:p-8">
+      <div className="rounded-t-xl bg-gradient-to-br from-[#121218] via-[#4F46E5]/20 to-[#7C3AED]/10 p-6 text-foreground md:p-8">
         <h1 className="text-3xl font-bold mb-4">
           {studentViewCourseDetails?.title}
         </h1>
@@ -205,11 +271,9 @@ function StudentViewCourseDetailsPage() {
         </div>
       </div>
 
-      {/* BODY */}
-      <div className="flex flex-col md:flex-row gap-8 mt-8">
-        <main className="flex-grow">
-          {/* OBJECTIVES */}
-          <Card className="mb-8">
+      <div className="mt-8 flex flex-col gap-8 lg:flex-row">
+        <main className="min-w-0 flex-1">
+          <Card className="mb-8 border-border/60 bg-card/80">
             <CardHeader>
               <CardTitle>What you'll learn</CardTitle>
             </CardHeader>
@@ -228,7 +292,7 @@ function StudentViewCourseDetailsPage() {
           </Card>
 
           {/* CURRICULUM */}
-          <Card>
+          <Card className="border-border/60 bg-card/80">
             <CardHeader>
               <CardTitle>Course Curriculum</CardTitle>
             </CardHeader>
@@ -254,34 +318,63 @@ function StudentViewCourseDetailsPage() {
               ))}
             </CardContent>
           </Card>
+
+          {/* REVIEWS SECTION */}
+          <Card className="mt-8 border-border/60 bg-card/80">
+            <CardHeader>
+              <CardTitle>Student Reviews</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isEnrolled && (
+                <div className="mb-8">
+                  <ReviewForm
+                    courseId={currentCourseDetailsId}
+                    auth={auth}
+                    onReviewSubmitted={() => fetchReviews(currentCourseDetailsId)}
+                  />
+                </div>
+              )}
+
+              <ReviewList
+                reviews={reviews}
+                averageRating={averageRating}
+                totalReviews={totalReviews}
+                currentUserId={auth?.user?._id}
+                onReviewUpdated={() => fetchReviews(currentCourseDetailsId)}
+                onReviewDeleted={() => fetchReviews(currentCourseDetailsId)}
+              />
+            </CardContent>
+          </Card>
         </main>
 
         {/* SIDEBAR */}
-        <aside className="w-full md:w-[400px]">
-          <Card className="sticky top-4">
+        <aside className="w-full shrink-0 lg:w-[380px] xl:w-[400px]">
+          <Card className="sticky top-20 border-border/60 bg-card/80 shadow-lg shadow-indigo-500/5">
             <CardContent className="p-6">
-              <VideoPlayer
-                url={
-                  freePreviewIndex !== -1
-                    ? studentViewCourseDetails?.curriculum[
-                        freePreviewIndex
-                      ]?.videoUrl
-                    : ""
-                }
-                width="100%"
-                height="220px"
-              />
+              <div className="aspect-video w-full overflow-hidden rounded-lg bg-black">
+                <VideoPlayer
+                  url={
+                    freePreviewIndex !== -1
+                      ? studentViewCourseDetails?.curriculum[
+                          freePreviewIndex
+                        ]?.videoUrl
+                      : ""
+                  }
+                  width="100%"
+                  height="100%"
+                />
+              </div>
 
-              <div className="my-4 text-3xl font-bold">
+              <div className="my-4 text-3xl font-bold text-indigo-400">
                 ${studentViewCourseDetails?.pricing}
               </div>
 
               <Button
                 onClick={handleCreatePayment}
-                className="w-full"
+                className="lms-btn-primary w-full"
                 disabled={isProcessingPayment}
               >
-                {isProcessingPayment ? "Processing..." : "Buy Now"}
+                {isProcessingPayment ? "Processing..." : "Pay Now"}
               </Button>
             </CardContent>
           </Card>
@@ -301,11 +394,13 @@ function StudentViewCourseDetailsPage() {
             <DialogTitle>Course Preview</DialogTitle>
           </DialogHeader>
 
-          <VideoPlayer
-            url={displayCurrentVideoFreePreview}
-            width="100%"
-            height="300px"
-          />
+          <div className="aspect-video w-full overflow-hidden rounded-lg bg-black">
+            <VideoPlayer
+              url={displayCurrentVideoFreePreview}
+              width="100%"
+              height="100%"
+            />
+          </div>
 
           <DialogFooter>
             <DialogClose asChild>

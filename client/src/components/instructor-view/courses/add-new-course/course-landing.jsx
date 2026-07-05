@@ -1,12 +1,8 @@
 import FormControls from "@/components/common-form/form-controls";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { courseLandingPageFormControls } from "@/config";
-import { InstructorContext } from "@/context/instructor-context";
-import { useContext } from "react";
 
-function CourseLanding() {
-  const { courseLandingFormData, setCourseLandingFormData } =
-    useContext(InstructorContext);
+function CourseLanding({ courseLandingFormData, setCourseLandingFormData }) {
   return (
     <Card>
       <CardHeader>

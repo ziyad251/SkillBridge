@@ -11,13 +11,19 @@ import { DollarSign, Users } from "lucide-react";
 
 function InstructorDashboard({ listOfCourses }) {
   function calculateTotalStudentsAndProfit() {
-    const { totalStudents, totalProfit, studentList } = listOfCourses.reduce(
-      (acc, course) => {
-        const studentCount = course.students.length;
-        acc.totalStudents += studentCount;
-        acc.totalProfit += course.pricing * studentCount;
+    const courses = Array.isArray(listOfCourses) ? listOfCourses : [];
 
-        course.students.forEach((student) => {
+    return courses.reduce(
+      (acc, course) => {
+        const students = course?.students || [];
+        acc.totalStudents += students.length;
+        acc.totalProfit += students.reduce(
+          (sum, student) =>
+            sum + Number(student?.paidAmount ?? course?.pricing ?? 0),
+          0
+        );
+
+        students.forEach((student) => {
           acc.studentList.push({
             courseTitle: course.title,
             studentName: student.studentName,
@@ -33,34 +39,26 @@ function InstructorDashboard({ listOfCourses }) {
         studentList: [],
       }
     );
-
-    return {
-      totalProfit,
-      totalStudents,
-      studentList,
-    };
   }
 
-  console.log(calculateTotalStudentsAndProfit());
-
+  const stats = calculateTotalStudentsAndProfit();
   const config = [
     {
       icon: Users,
       label: "Total Students",
-      value: calculateTotalStudentsAndProfit().totalStudents,
+      value: stats.totalStudents,
     },
     {
       icon: DollarSign,
       label: "Total Revenue",
-      value: calculateTotalStudentsAndProfit().totalProfit,
+      value: stats.totalProfit,
     },
   ];
-
   return (
     <div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         {config.map((item, index) => (
-          <Card key={index}>
+          <Card key={index} className="border-border/60 bg-card/80 transition-all hover:border-indigo-500/30 hover:shadow-md">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 {item.label}
@@ -88,7 +86,7 @@ function InstructorDashboard({ listOfCourses }) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {calculateTotalStudentsAndProfit().studentList.map(
+                {stats.studentList.map(
                   (studentItem, index) => (
                     <TableRow key={index}>
                       <TableCell className="font-medium">

@@ -1,5 +1,6 @@
+import CourseCard from "@/components/ui/course-card";
+import EmptyState from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
@@ -11,14 +12,12 @@ import {
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { filterOptions, sortOptions } from "@/config";
-import { AuthContext } from "@/context/auth-context";
-import { StudentContext } from "@/context/student-context";
 import {
   checkCoursePurchaseInfoService,
   fetchStudentViewCourseListService,
 } from "@/services";
-import { ArrowUpDownIcon } from "lucide-react";
-import { useContext, useEffect, useState } from "react";
+import { ArrowUpDownIcon, Search } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 function createSearchParamsHelper(filterParams) {
@@ -35,18 +34,17 @@ function createSearchParamsHelper(filterParams) {
   return queryParams.join("&");
 }
 
-function StudentViewCoursesPage() {
+function StudentViewCoursesPage({
+  studentViewCoursesList,
+  setStudentViewCoursesList,
+  loadingState,
+  setLoadingState,
+  auth,
+}) {
   const [sort, setSort] = useState("price-lowtohigh");
   const [filters, setFilters] = useState({});
-  const [searchParams, setSearchParams] = useSearchParams();
-  const {
-    studentViewCoursesList,
-    setStudentViewCoursesList,
-    loadingState,
-    setLoadingState,
-  } = useContext(StudentContext);
+  const [, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { auth } = useContext(AuthContext);
 
   function handleFilterOnChange(getSectionId, getCurrentOption) {
     let cpyFilters = { ...filters };
@@ -126,13 +124,18 @@ function StudentViewCoursesPage() {
   console.log(loadingState, "loadingState");
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-4">All Courses</h1>
-      <div className="flex flex-col md:flex-row gap-4">
-        <aside className="w-full md:w-64 space-y-4">
-          <div>
+    <div className="mx-auto max-w-7xl overflow-x-hidden p-4 lg:p-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight">All Courses</h1>
+        <p className="mt-1 text-muted-foreground">
+          Browse and filter courses to find your next skill.
+        </p>
+      </div>
+      <div className="flex flex-col gap-6 lg:flex-row">
+        <aside className="w-full shrink-0 space-y-4 lg:w-72">
+          <div className="rounded-xl border border-border/60 bg-card/50 backdrop-blur-sm">
             {Object.keys(filterOptions).map((ketItem) => (
-              <div className="p-4 border-b">
+              <div className="p-4 border-b last:border-b-0">
                 <h3 className="font-bold mb-3">{ketItem.toUpperCase()}</h3>
                 <div className="grid gap-2 mt-2">
                   {filterOptions[ketItem].map((option) => (
@@ -156,8 +159,8 @@ function StudentViewCoursesPage() {
             ))}
           </div>
         </aside>
-        <main className="flex-1">
-          <div className="flex justify-end items-center mb-4 gap-5">
+        <main className="min-w-0 flex-1">
+          <div className="mb-4 flex flex-wrap items-center justify-end gap-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -185,53 +188,35 @@ function StudentViewCoursesPage() {
                 </DropdownMenuRadioGroup>
               </DropdownMenuContent>
             </DropdownMenu>
-            <span className="text-sm text-black font-bold">
+            <span className="text-sm font-semibold text-muted-foreground">
               {studentViewCoursesList.length} Results
             </span>
           </div>
           <div className="space-y-4">
-            {studentViewCoursesList && studentViewCoursesList.length > 0 ? (
+            {loadingState ? (
+              <div className="space-y-4">
+                {[...Array(3)].map((_, i) => (
+                  <Skeleton key={i} className="h-36 w-full rounded-xl" />
+                ))}
+              </div>
+            ) : studentViewCoursesList?.length > 0 ? (
               studentViewCoursesList.map((courseItem) => (
-                <Card
-                  onClick={() => handleCourseNavigate(courseItem?._id)}
-                  className="cursor-pointer"
+                <CourseCard
                   key={courseItem?._id}
-                >
-                  <CardContent className="flex gap-4 p-4">
-                    <div className="w-48 h-32 flex-shrink-0">
-                      <img
-                        src={courseItem?.image}
-                        className="w-ful h-full object-cover"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <CardTitle className="text-xl mb-2">
-                        {courseItem?.title}
-                      </CardTitle>
-                      <p className="text-sm text-gray-600 mb-1">
-                        Created By{" "}
-                        <span className="font-bold">
-                          {courseItem?.instructorName}
-                        </span>
-                      </p>
-                      <p className="text-[16px] text-gray-600 mt-3 mb-2">
-                        {`${courseItem?.curriculum?.length} ${
-                          courseItem?.curriculum?.length <= 1
-                            ? "Lecture"
-                            : "Lectures"
-                        } - ${courseItem?.level.toUpperCase()} Level`}
-                      </p>
-                      <p className="font-bold text-lg">
-                        ${courseItem?.pricing}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
+                  course={{
+                    ...courseItem,
+                    rating: 4.7,
+                  }}
+                  layout="list"
+                  onClick={() => handleCourseNavigate(courseItem?._id)}
+                />
               ))
-            ) : loadingState ? (
-              <Skeleton />
             ) : (
-              <h1 className="font-extrabold text-4xl">No Courses Found</h1>
+              <EmptyState
+                icon={Search}
+                title="No courses found"
+                description="Try adjusting your filters or check back later for new courses."
+              />
             )}
           </div>
         </main>

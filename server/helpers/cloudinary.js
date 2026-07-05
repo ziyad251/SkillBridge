@@ -13,7 +13,11 @@ const uploadMediaToCloudinary = async (filePath) => {
       resource_type: "auto",
     });
 
-    return result;
+    return {
+      ...result,
+      url: result.secure_url || result.url,
+      public_id: result.public_id,
+    };
   } catch (error) {
     console.log(error);
     throw new Error("Error uploading to cloudinary");
