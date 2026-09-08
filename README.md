@@ -11,7 +11,7 @@ A comprehensive Learning Management System that connects instructors and student
 ![React](https://img.shields.io/badge/React.js-Frontend-61DAFB?style=for-the-badge&logo=react&logoColor=black)
 ![Node.js](https://img.shields.io/badge/Node.js-Backend-339933?style=for-the-badge&logo=node.js&logoColor=white)
 ![Express.js](https://img.shields.io/badge/Express.js-REST_API-000000?style=for-the-badge&logo=express&logoColor=white)
-![MongoDB](https://img.shields.io/badge/MongoDB-Database-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL%20%2F%20Neon-Database-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-Styling-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
 ![Razorpay](https://img.shields.io/badge/Razorpay-Payments-0C2451?style=for-the-badge&logo=razorpay&logoColor=white)
 
@@ -29,7 +29,7 @@ A comprehensive Learning Management System that connects instructors and student
 
 The platform enables instructors to create and manage courses while allowing students to explore available courses, securely purchase and enroll in them, access learning content, submit reviews and ratings, and receive certificates upon successful course completion.
 
-Built using the **MERN stack**, SkillBridge combines a responsive React frontend with a RESTful Express.js backend and MongoDB database.
+SkillBridge combines a responsive React frontend with a RESTful Express.js backend and a PostgreSQL database hosted on Neon. The server uses the `pg` driver and a repository layer for SQL queries, transactions, and relational data integrity.
 
 ---
 
@@ -133,7 +133,7 @@ This provides learners with recognition for completing their enrolled courses.
 
 ## 📱 Responsive User Interface
 
-The frontend is built using **React.js** and **Tailwind CSS** to provide a responsive and user-friendly experience across different screen sizes.
+The frontend is built using **React.js** and **Tailwind CSS** to provide a responsive and user-friendly experience across different screen sizes. The current UI includes refreshed navigation, dashboards, course cards, learning views, forms, empty states, and a student home experience.
 
 **Redux Toolkit** is used for application state management, while **Axios** handles communication between the frontend and backend APIs.
 
@@ -212,7 +212,7 @@ The frontend is built using **React.js** and **Tailwind CSS** to provide a respo
                     ┌───────────┘         └───────────┐
                     ▼                                 ▼
           ┌─────────────────────┐           ┌─────────────────────┐
-          │       MongoDB       │           │      Razorpay       │
+          │   PostgreSQL / Neon │           │      Razorpay       │
           │                     │           │                     │
           │ • Users             │           │ • Payment Orders    │
           │ • Courses           │           │ • Transactions      │
@@ -234,7 +234,8 @@ The frontend is built using **React.js** and **Tailwind CSS** to provide a respo
 | **HTTP Client** | Axios |
 | **Backend** | Node.js |
 | **Backend Framework** | Express.js |
-| **Database** | MongoDB |
+| **Database** | PostgreSQL hosted on Neon |
+| **Database Driver** | `pg` |
 | **Authentication** | JWT |
 | **Payments** | Razorpay |
 | **API Architecture** | RESTful APIs |
@@ -256,9 +257,12 @@ SkillBridge/
 │
 ├── server/
 │   ├── controllers/
-│   ├── models/
 │   ├── routes/
 │   ├── middleware/
+│   ├── config/postgres.js
+│   ├── migrations/001_initial_schema.sql
+│   ├── repositories/postgres-repository.js
+│   ├── scripts/
 │   └── ...
 │
 ├── assets/
@@ -317,11 +321,27 @@ Example:
 
 ```env
 PORT=5000
-MONGO_URI=your_mongodb_connection_string
+DATABASE_URL=your_neon_postgresql_connection_string
 JWT_SECRET=your_jwt_secret
+CLIENT_URL=http://localhost:5173
 
 RAZORPAY_KEY_ID=your_razorpay_key
 RAZORPAY_KEY_SECRET=your_razorpay_secret
+```
+
+`DATABASE_URL` should be the pooled connection string provided by Neon. The PostgreSQL client is configured for SSL in the server connection layer.
+
+Initialize the database schema before starting the API:
+
+```bash
+npm run db:schema
+```
+
+The migration and verification scripts are also available when moving an existing MongoDB dataset:
+
+```bash
+npm run db:migrate
+npm run db:verify
 ```
 
 Start the backend:
@@ -349,10 +369,8 @@ npm install
 Start the frontend:
 
 ```bash
-npm start
+npm run dev
 ```
-
-> The exact start command may differ depending on the project's current package configuration.
 
 For additional setup and execution instructions, refer to **`RUN_PROJECT.md`**.
 
@@ -485,6 +503,6 @@ If you find this project useful or interesting, consider giving the repository a
 
 <div align="center">
 
-### Built with ⚛️ React, 🟢 Node.js, 🍃 MongoDB, and 💳 Razorpay
+### Built with ⚛️ React, 🟢 Node.js, 🐘 PostgreSQL/Neon, and 💳 Razorpay
 
 </div>
