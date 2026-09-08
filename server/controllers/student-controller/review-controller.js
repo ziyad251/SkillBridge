@@ -1,249 +1,58 @@
-const Review = require("../../models/Review");
-const StudentCourses = require("../../models/StudentCourses");
+const { isEnrolled, getCourse, createReview: insertReview, getReviews, getReview, updateReview: editReview, deleteReview: removeReview } = require("../../repositories/postgres-repository");
 
 const createReview = async (req, res) => {
   try {
     const { courseId, rating, review } = req.body;
     const userId = req.user?._id;
     const userName = req.user?.userName;
-
-    console.log("🔍 [REVIEW] Creating review for course:", courseId, "by user:", userId);
-
-    // Validate input
-    if (!courseId || !rating || !review) {
-      return res.status(400).json({
-        success: false,
-        message: "Please provide all required fields",
-      });
-    }
-
-    if (rating < 1 || rating > 5) {
-      return res.status(400).json({
-        success: false,
-        message: "Rating must be between 1 and 5",
-      });
-    }
-
-    if (review.trim().length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Review cannot be empty",
-      });
-    }
-
-    // Verify enrollment
-    const studentPurchasedCourses = await StudentCourses.findOne({ userId });
-    const isEnrolled = studentPurchasedCourses?.courses?.some(
-      (item) => String(item.courseId) === String(courseId)
-    );
-
-    if (!isEnrolled) {
-      console.log("❌ [REVIEW] User not enrolled in course");
-      return res.status(403).json({
-        success: false,
-        message: "You must be enrolled in this course to leave a review",
-      });
-    }
-
-    // Check for existing review
-    const existingReview = await Review.findOne({
-      courseId: String(courseId),
-      userId: String(userId),
-    });
-
-    if (existingReview) {
-      console.log("❌ [REVIEW] Duplicate review found");
-      return res.status(400).json({
-        success: false,
-        message: "You have already reviewed this course",
-      });
-    }
-
-    // Create review
-    const newReview = new Review({
-      courseId: String(courseId),
-      userId: String(userId),
-      userName,
-      rating: Number(rating),
-      review: review.trim(),
-    });
-
-    const savedReview = await newReview.save();
-    console.log("✅ [REVIEW] Review created successfully:", savedReview._id);
-
-    res.status(201).json({
-      success: true,
-      message: "Review created successfully",
-      data: savedReview,
-    });
-  } catch (e) {
-    console.log("❌ [REVIEW] Error creating review:", e.message);
-    if (e.code === 11000) {
-      return res.status(400).json({
-        success: false,
-        message: "You have already reviewed this course",
-      });
-    }
-    res.status(500).json({
-      success: false,
-      message: "Failed to create review",
-    });
+    if (!courseId || !rating || !review || review.trim().length === 0) return res.status(400).json({ success: false, message: "Please provide all required fields" });
+    if (rating < 1 || rating > 5) return res.status(400).json({ success: false, message: "Rating must be between 1 and 5" });
+    const course = await getCourse(courseId);
+    if (!course) return res.status(404).json({ success: false, message: "Course not found" });
+    if (Number(course.pricing) !== 0 && !(await isEnrolled(userId, courseId))) return res.status(403).json({ success: false, message: "You must be enrolled in this course to leave a review" });
+    if (await getReviewByCourseAndUser(courseId, userId)) return res.status(400).json({ success: false, message: "You have already reviewed this course" });
+    const savedReview = await insertReview({ courseId, userId, userName, rating, review: review.trim() });
+    res.status(201).json({ success: true, message: "Review created successfully", data: savedReview });
+  } catch (error) {
+    if (error.code === "23505") return res.status(400).json({ success: false, message: "You have already reviewed this course" });
+    console.log("[REVIEW]", error.message);
+    res.status(500).json({ success: false, message: "Failed to create review" });
   }
+};
+
+const getReviewByCourseAndUser = async (courseId, userId) => {
+  const reviews = await getReviews(courseId);
+  return reviews.find((item) => String(item.userId) === String(userId));
 };
 
 const getReviewsByCourse = async (req, res) => {
   try {
-    const { courseId } = req.params;
-
-    console.log("🔍 [REVIEW] Fetching reviews for course:", courseId);
-
-    const reviews = await Review.find({ courseId: String(courseId) }).sort({
-      createdAt: -1,
-    });
-
-    if (reviews.length === 0) {
-      return res.status(200).json({
-        success: true,
-        data: {
-          reviews: [],
-          averageRating: 0,
-          totalReviews: 0,
-        },
-      });
-    }
-
-    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
-    const averageRating = (totalRating / reviews.length).toFixed(1);
-
-    console.log(
-      "✅ [REVIEW] Found",
-      reviews.length,
-      "reviews with average rating:",
-      averageRating
-    );
-
-    res.status(200).json({
-      success: true,
-      data: {
-        reviews,
-        averageRating: Number(averageRating),
-        totalReviews: reviews.length,
-      },
-    });
-  } catch (e) {
-    console.log("❌ [REVIEW] Error fetching reviews:", e.message);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch reviews",
-    });
-  }
+    const reviews = await getReviews(req.params.courseId);
+    const averageRating = reviews.length ? Number((reviews.reduce((sum, item) => sum + item.rating, 0) / reviews.length).toFixed(1)) : 0;
+    res.status(200).json({ success: true, data: { reviews, averageRating, totalReviews: reviews.length } });
+  } catch (error) { console.log(error); res.status(500).json({ success: false, message: "Failed to fetch reviews" }); }
 };
 
 const updateReview = async (req, res) => {
   try {
-    const { reviewId } = req.params;
     const { rating, review } = req.body;
-    const userId = req.user?._id;
-
-    console.log("🔍 [REVIEW] Updating review:", reviewId);
-
-    // Validate input
-    if (!rating || !review) {
-      return res.status(400).json({
-        success: false,
-        message: "Please provide rating and review",
-      });
-    }
-
-    if (rating < 1 || rating > 5) {
-      return res.status(400).json({
-        success: false,
-        message: "Rating must be between 1 and 5",
-      });
-    }
-
-    // Check ownership
-    const existingReview = await Review.findById(reviewId);
-
-    if (!existingReview) {
-      return res.status(404).json({
-        success: false,
-        message: "Review not found",
-      });
-    }
-
-    if (String(existingReview.userId) !== String(userId)) {
-      console.log("❌ [REVIEW] User not authorized to update review");
-      return res.status(403).json({
-        success: false,
-        message: "You can only update your own reviews",
-      });
-    }
-
-    // Update review
-    existingReview.rating = Number(rating);
-    existingReview.review = review.trim();
-    const updatedReview = await existingReview.save();
-
-    console.log("✅ [REVIEW] Review updated successfully");
-
-    res.status(200).json({
-      success: true,
-      message: "Review updated successfully",
-      data: updatedReview,
-    });
-  } catch (e) {
-    console.log("❌ [REVIEW] Error updating review:", e.message);
-    res.status(500).json({
-      success: false,
-      message: "Failed to update review",
-    });
-  }
+    if (!rating || !review || rating < 1 || rating > 5) return res.status(400).json({ success: false, message: "Please provide rating and review" });
+    const existing = await getReview(req.params.reviewId);
+    if (!existing) return res.status(404).json({ success: false, message: "Review not found" });
+    if (String(existing.userId) !== String(req.user?._id)) return res.status(403).json({ success: false, message: "You can only update your own reviews" });
+    const updated = await editReview(req.params.reviewId, req.user._id, rating, review.trim());
+    res.status(200).json({ success: true, message: "Review updated successfully", data: updated });
+  } catch (error) { console.log(error); res.status(500).json({ success: false, message: "Failed to update review" }); }
 };
 
 const deleteReview = async (req, res) => {
   try {
-    const { reviewId } = req.params;
-    const userId = req.user?._id;
-
-    console.log("🔍 [REVIEW] Deleting review:", reviewId);
-
-    const review = await Review.findById(reviewId);
-
-    if (!review) {
-      return res.status(404).json({
-        success: false,
-        message: "Review not found",
-      });
-    }
-
-    if (String(review.userId) !== String(userId)) {
-      console.log("❌ [REVIEW] User not authorized to delete review");
-      return res.status(403).json({
-        success: false,
-        message: "You can only delete your own reviews",
-      });
-    }
-
-    await Review.findByIdAndDelete(reviewId);
-    console.log("✅ [REVIEW] Review deleted successfully");
-
-    res.status(200).json({
-      success: true,
-      message: "Review deleted successfully",
-    });
-  } catch (e) {
-    console.log("❌ [REVIEW] Error deleting review:", e.message);
-    res.status(500).json({
-      success: false,
-      message: "Failed to delete review",
-    });
-  }
+    const existing = await getReview(req.params.reviewId);
+    if (!existing) return res.status(404).json({ success: false, message: "Review not found" });
+    if (String(existing.userId) !== String(req.user?._id)) return res.status(403).json({ success: false, message: "You can only delete your own reviews" });
+    await removeReview(req.params.reviewId, req.user._id);
+    res.status(200).json({ success: true, message: "Review deleted successfully" });
+  } catch (error) { console.log(error); res.status(500).json({ success: false, message: "Failed to delete review" }); }
 };
 
-module.exports = {
-  createReview,
-  getReviewsByCourse,
-  updateReview,
-  deleteReview,
-};
+module.exports = { createReview, getReviewsByCourse, updateReview, deleteReview };
