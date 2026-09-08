@@ -11,12 +11,12 @@ function BrandLogo({ to = "/", className, showText = true }) {
         className
       )}
     >
-      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#4F46E5] to-[#7C3AED] shadow-lg shadow-indigo-500/30 transition-transform duration-200 group-hover:scale-105">
+      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#176B5F] shadow-lg shadow-teal-900/20 transition-transform duration-200 group-hover:scale-105">
         <GraduationCap className="h-5 w-5 text-white" />
       </span>
       {showText ? (
         <span className="text-base md:text-lg">
-          LMS<span className="text-indigo-400">Learn</span>
+          LMS<span className="text-[#E8755E]">Learn</span>
         </span>
       ) : null}
     </Link>

@@ -9,7 +9,7 @@ function CourseCard({ course, onClick, className, layout = "grid" }) {
       <article
         onClick={onClick}
         className={cn(
-          "group flex cursor-pointer gap-4 overflow-hidden rounded-xl border border-border/60 bg-card/80 p-4 shadow-sm transition-all duration-300 hover:border-indigo-500/30 hover:shadow-lg hover:shadow-indigo-500/10",
+          "group flex cursor-pointer gap-4 overflow-hidden rounded-lg border border-border/60 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10",
           className
         )}
       >
@@ -21,7 +21,7 @@ function CourseCard({ course, onClick, className, layout = "grid" }) {
           />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="line-clamp-2 text-lg font-semibold tracking-tight group-hover:text-indigo-400">
+          <h3 className="line-clamp-2 text-lg font-semibold tracking-tight group-hover:text-primary">
             {course?.title}
           </h3>
           <p className="mt-1 text-sm text-muted-foreground">{course?.instructorName}</p>
@@ -29,7 +29,7 @@ function CourseCard({ course, onClick, className, layout = "grid" }) {
             <Star className="h-3.5 w-3.5 fill-current" />
             <span>{rating}</span>
           </div>
-          <p className="mt-2 text-lg font-bold text-indigo-400">${course?.pricing}</p>
+          <p className="mt-2 text-lg font-bold text-primary">${course?.pricing}</p>
         </div>
       </article>
     );
@@ -39,7 +39,7 @@ function CourseCard({ course, onClick, className, layout = "grid" }) {
     <article
       onClick={onClick}
       className={cn(
-        "group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card/80 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/10",
+        "group cursor-pointer overflow-hidden rounded-lg border border-border/60 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/10",
         className
       )}
     >
@@ -52,16 +52,16 @@ function CourseCard({ course, onClick, className, layout = "grid" }) {
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
       </div>
       <div className="p-4">
-        <h3 className="line-clamp-2 font-semibold tracking-tight group-hover:text-indigo-400">
+        <h3 className="line-clamp-2 font-semibold tracking-tight group-hover:text-primary">
           {course?.title}
         </h3>
-        <p className="mt-1 text-sm text-muted-foreground">{course?.instructorName}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{course?.instructorName || "Independent instructor"}</p>
         <div className="mt-2 flex items-center justify-between">
           <div className="flex items-center gap-1 text-sm text-amber-400/90">
             <Star className="h-3.5 w-3.5 fill-current" />
             <span>{rating}</span>
           </div>
-          <p className="font-bold text-indigo-400">${course?.pricing}</p>
+          <p className="font-bold text-primary">${course?.pricing}</p>
         </div>
       </div>
     </article>

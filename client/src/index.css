@@ -1,39 +1,40 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
+    --background: 45 33% 97%;
+    --foreground: 168 24% 14%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    --card-foreground: 168 24% 14%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 243 75% 59%;
+    --popover-foreground: 168 24% 14%;
+    --primary: 166 64% 29%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 262 83% 58%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 240 5% 96%;
-    --muted-foreground: 240 4% 46%;
-    --accent: 189 94% 43%;
+    --secondary: 36 92% 57%;
+    --secondary-foreground: 168 24% 14%;
+    --muted: 45 22% 93%;
+    --muted-foreground: 168 10% 43%;
+    --accent: 12 82% 63%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
-    --ring: 243 75% 59%;
-    --radius: 0.75rem;
-    --chart-1: 243 75% 59%;
-    --chart-2: 262 83% 58%;
-    --chart-3: 189 94% 43%;
-    --chart-4: 173 58% 39%;
-    --chart-5: 43 74% 66%;
-    --lms-indigo: #4f46e5;
-    --lms-violet: #7c3aed;
-    --lms-cyan: #06b6d4;
-    --lms-dark: #0a0a0f;
-    --lms-surface: #121218;
+    --border: 42 19% 85%;
+    --input: 42 19% 85%;
+    --ring: 166 64% 29%;
+    --radius: 0.625rem;
+    --chart-1: 166 64% 29%;
+    --chart-2: 12 82% 63%;
+    --chart-3: 36 92% 57%;
+    --chart-4: 197 65% 45%;
+    --chart-5: 274 41% 54%;
+    --lms-teal: #176b5f;
+    --lms-coral: #e8755e;
+    --lms-gold: #f5b83d;
+    --lms-ink: #1b302d;
   }
 
   .dark {
@@ -65,47 +66,58 @@
   }
 
   html {
-    @apply dark scroll-smooth;
+    @apply scroll-smooth;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: "DM Sans", sans-serif;
+    line-height: 1.5;
   }
+
+  h1, h2, h3, h4, h5, h6 { font-family: "Space Grotesk", sans-serif; }
+  :focus-visible { @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background; }
 }
 
 @layer components {
   .lms-gradient-hero {
     background:
-      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(79, 70, 229, 0.35), transparent),
-      radial-gradient(ellipse 60% 40% at 100% 0%, rgba(124, 58, 237, 0.2), transparent),
-      radial-gradient(ellipse 50% 30% at 0% 50%, rgba(6, 182, 212, 0.12), transparent),
+      radial-gradient(ellipse 70% 45% at 15% 0%, rgba(245, 184, 61, 0.2), transparent),
+      radial-gradient(ellipse 65% 45% at 100% 10%, rgba(232, 117, 94, 0.16), transparent),
+      radial-gradient(ellipse 55% 35% at 50% 100%, rgba(23, 107, 95, 0.1), transparent),
       hsl(var(--background));
   }
 
   .lms-gradient-text {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #06b6d4 100%);
+    background-image: linear-gradient(135deg, #176b5f 0%, #e8755e 100%);
   }
 
   .lms-glass-card {
-    @apply rounded-xl border border-white/10 bg-white/5 shadow-lg backdrop-blur-xl transition-all duration-300;
+    @apply rounded-lg border border-border/70 bg-white/75 shadow-sm backdrop-blur-xl transition-all duration-300;
   }
 
   .lms-glass-card:hover {
-    @apply border-indigo-500/30 bg-white/[0.07] shadow-xl shadow-indigo-500/10;
+    @apply border-primary/40 bg-white shadow-lg shadow-primary/10;
   }
 
   .lms-btn-primary {
-    @apply bg-[#4F46E5] text-white shadow-lg shadow-indigo-500/25 transition-all duration-200 hover:bg-[#4338ca] hover:shadow-indigo-500/40 active:scale-[0.98];
+    @apply bg-[#176B5F] text-white shadow-lg shadow-teal-900/15 transition-all duration-200 hover:bg-[#12574D] hover:shadow-teal-900/25 active:scale-[0.98];
   }
 
   .lms-nav-link {
-    @apply text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-foreground;
+    @apply relative text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-primary;
   }
 
+  .lms-nav-link-active { @apply text-primary; }
+  .lms-nav-link-active::after { content: ""; @apply absolute -bottom-4 left-0 right-0 h-0.5 rounded-full bg-primary; }
+  .lms-section-kicker { @apply text-xs font-bold uppercase tracking-[0.18em] text-primary; }
+  .lms-page-heading { @apply text-3xl font-bold tracking-tight text-[#1B302D] md:text-4xl; }
+  .lms-input { @apply h-11 rounded-md border-border bg-white shadow-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary; }
+
   .lms-stat-card {
-    @apply rounded-xl border border-border/60 bg-card/80 p-5 shadow-sm backdrop-blur-sm transition-all duration-300 hover:border-indigo-500/30 hover:shadow-md hover:shadow-indigo-500/5;
+    @apply rounded-lg border border-border/60 bg-card/80 p-5 shadow-sm backdrop-blur-sm transition-all duration-300 hover:border-primary/30 hover:shadow-md hover:shadow-primary/5;
   }
 
   .lms-page-shell {
@@ -120,5 +132,9 @@ body::-webkit-scrollbar-track {
   @apply bg-muted/30;
 }
 body::-webkit-scrollbar-thumb {
-  @apply rounded-full bg-indigo-500/40;
+  @apply rounded-full bg-primary/40;
+}
+
+@media (max-width: 640px) {
+  .lms-nav-link-active::after { @apply -bottom-2; }
 }

@@ -58,7 +58,7 @@ function InstructorDashboard({ listOfCourses }) {
     <div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         {config.map((item, index) => (
-          <Card key={index} className="border-border/60 bg-card/80 transition-all hover:border-indigo-500/30 hover:shadow-md">
+          <Card key={index} className="border-border/60 bg-white transition-all hover:border-primary/30 hover:shadow-md">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 {item.label}

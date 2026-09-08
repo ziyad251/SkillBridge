@@ -10,12 +10,12 @@ function EmptyState({
   return (
     <div
       className={cn(
-        "col-span-full flex flex-col items-center justify-center rounded-xl border border-dashed border-border/80 bg-muted/20 px-6 py-16 text-center",
+        "col-span-full flex flex-col items-center justify-center rounded-lg border border-dashed border-border/80 bg-white/60 px-6 py-16 text-center",
         className
       )}
     >
       {Icon ? (
-        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-indigo-500/10 text-indigo-400">
+        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
           <Icon className="h-7 w-7" />
         </div>
       ) : null}

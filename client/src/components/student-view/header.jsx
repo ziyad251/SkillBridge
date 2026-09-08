@@ -70,9 +70,9 @@ function StudentViewCommonHeader({ resetCredentials, auth }) {
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-2 border-border/60 pl-1.5 pr-2 transition-all hover:border-indigo-500/40"
+                className="gap-2 border-border/60 pl-1.5 pr-2 transition-all hover:border-primary/40"
               >
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-[#4F46E5] to-[#7C3AED] text-xs font-bold text-white">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#176B5F] text-xs font-bold text-white">
                   {initials}
                 </span>
                 <span className="hidden max-w-[120px] truncate md:inline">

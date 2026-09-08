@@ -61,16 +61,18 @@ function CourseSettings({
             alt="Course"
             className="w-full rounded-md border object-cover"
           />
-        ) : (
-          <div className="flex flex-col gap-3">
-            <Label>Upload Course Image</Label>
-            <Input
-              onChange={handleImageUploadChange}
-              type="file"
-              accept="image/*"
-            />
-          </div>
-        )}
+        ) : null}
+        <div className="mt-4 flex flex-col gap-3">
+          <Label htmlFor="course-thumbnail-upload">
+            {courseLandingFormData?.image ? "Change Thumbnail" : "Upload Thumbnail"}
+          </Label>
+          <Input
+            id="course-thumbnail-upload"
+            onChange={handleImageUploadChange}
+            type="file"
+            accept="image/*"
+          />
+        </div>
       </CardContent>
     </Card>
   );
