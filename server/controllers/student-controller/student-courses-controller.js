@@ -1,24 +1,12 @@
-const StudentCourses = require("../../models/StudentCourses");
+const { getStudentEnrollments } = require("../../repositories/postgres-repository");
 
 const getCoursesByStudentId = async (req, res) => {
   try {
     const { studentId } = req.params;
 
-    const studentBoughtCourses = await StudentCourses.findOne({
-      userId: studentId,
-    });
-
-    // If user has never bought anything
-    if (!studentBoughtCourses) {
-      return res.status(200).json({
-        success: true,
-        data: [],
-      });
-    }
-
     return res.status(200).json({
       success: true,
-      data: studentBoughtCourses.courses || [],
+      data: await getStudentEnrollments(studentId),
     });
 
   } catch (error) {
