@@ -1,12 +1,10 @@
 const express = require("express");
-const mongoose = require("mongoose");
 const {
   registerUser,
   loginUser,
 } = require("../../controllers/auth-controller/index");
 const authenticateMiddleware = require("../../middleware/auth-middleware");
-const Course = require("../../models/Course");
-const Order = require("../../models/Order");
+const { countOrdersByUser, countCoursesByInstructor } = require("../../repositories/postgres-repository");
 const router = express.Router();
 
 router.post("/register", registerUser);
@@ -30,16 +28,13 @@ router.get("/profile", authenticateMiddleware, async (req, res) => {
     let coursesPurchased = 0;
     let coursesCreated = 0;
 
-    const orders = await Order.find({ userId: String(userId) });
-    coursesPurchased = orders.length;
+    coursesPurchased = await countOrdersByUser(userId);
 
     if (user.role === "instructor") {
-      coursesCreated = await Course.countDocuments({ instructorId: userId });
+      coursesCreated = await countCoursesByInstructor(userId);
     }
 
-    const joinedDate = mongoose.Types.ObjectId.isValid(userId)
-      ? new mongoose.Types.ObjectId(userId).getTimestamp()
-      : null;
+    const joinedDate = null;
 
     res.status(200).json({
       success: true,

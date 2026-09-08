@@ -2,7 +2,7 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
-const mongoose = require("mongoose");
+const { pool, testPostgresConnection } = require("./config/postgres");
 const authRoutes = require("./routes/auth-routes/index");
 const mediaRoutes = require("./routes/instructor-routes/media-routes");
 const instructorCourseRoutes = require("./routes/instructor-routes/course-routes");
@@ -15,7 +15,7 @@ const certificateRoutes = require("./routes/student-routes/certificate-routes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI;
+let postgresStatus = "disconnected";
 
 const allowedOrigins = [
   "http://localhost:5173",
@@ -55,18 +55,13 @@ app.get("/health", (req, res) => {
   res.status(200).json({
     status: "ok",
     service: "lms-api",
-    mongo: mongoose.connection.readyState === 1 ? "connected" : "disconnected",
+    postgres: postgresStatus,
   });
 });
 
-if (!MONGO_URI) {
-  console.error("[MongoDB] MONGO_URI is missing in .env");
-} else {
-  mongoose
-    .connect(MONGO_URI)
-    .then(() => console.log("[MongoDB] Connected"))
-    .catch((e) => console.error("[MongoDB] Connection error:", e.message));
-}
+testPostgresConnection().then((connected) => {
+  postgresStatus = connected ? "connected" : "disconnected";
+});
 
 app.use("/auth", authRoutes);
 app.use("/media", mediaRoutes);
