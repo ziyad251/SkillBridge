@@ -57,7 +57,13 @@ function AuthPage({
         </div>
       </header>
 
-      <div className="flex flex-1 items-center justify-center px-4 py-12">
+      <div className="mx-auto flex w-full max-w-6xl flex-1 items-center justify-center gap-12 px-4 py-10 lg:px-8">
+        <div className="hidden max-w-sm space-y-5 lg:block">
+          <p className="lms-section-kicker">Your next chapter</p>
+          <h1 className="text-4xl font-bold leading-tight text-[#1B302D]">Build momentum with learning that fits your life.</h1>
+          <p className="text-muted-foreground">Explore focused courses, keep your progress in view, and turn every completed lesson into something you can show.</p>
+          <div className="flex items-center gap-3 text-sm font-semibold text-primary"><span className="h-2 w-2 rounded-full bg-[#E8755E]" /> Learn at your pace</div>
+        </div>
         <Tabs
           value={activeTab}
           defaultValue="signin"
@@ -69,7 +75,7 @@ function AuthPage({
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
           </TabsList>
           <TabsContent value="signin">
-            <Card className="mt-4 border-border/60 bg-card/80 shadow-xl shadow-indigo-500/5 backdrop-blur-xl">
+            <Card className="mt-4 border-border/60 bg-white shadow-xl shadow-[#176B5F]/10">
               <CardHeader>
                 <CardTitle>Sign in to your account</CardTitle>
                 <CardDescription>
@@ -89,7 +95,7 @@ function AuthPage({
             </Card>
           </TabsContent>
           <TabsContent value="signup">
-            <Card className="mt-4 border-border/60 bg-card/80 shadow-xl shadow-indigo-500/5 backdrop-blur-xl">
+            <Card className="mt-4 border-border/60 bg-white shadow-xl shadow-[#176B5F]/10">
               <CardHeader>
                 <CardTitle>Create a new account</CardTitle>
                 <CardDescription>

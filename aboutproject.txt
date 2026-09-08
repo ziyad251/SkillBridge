@@ -1,0 +1,1126 @@
+# LMS Project: Current Implementation and Interview Study Guide
+
+This document describes the implementation currently present in the repository. It is based on the active source code, SQL schema, package files, routes, controllers, repositories, helpers, and frontend pages. It does not describe an ideal or redesigned architecture.
+
+When a behavior cannot be established from the checked-in source, this document says: Not confirmed from the current implementation.
+
+## 1. Project Overview
+
+This is a learning management system (LMS) with two application roles represented in the code: regular users/students and instructors. Students can register, log in, browse courses, view course details, purchase paid courses through Razorpay, access courses, watch lectures, record progress, download a completion certificate, and create or manage reviews. Instructors can create and update courses, manage lecture curriculum, upload media, and view course-related student data returned by course queries.
+
+The active backend persists application data in PostgreSQL using the node-postgres `pg` package and parameterized SQL. Neon is supported as the PostgreSQL provider through the `DATABASE_URL` connection string and SSL configuration. MongoDB/Mongoose remains in the dependency list and is used by migration and verification scripts, but the active API repository is PostgreSQL-based.
+
+### High-level architecture
+
+```text
+React + React Router
+        |
+        v
+Axios API client
+        |
+        v
+Node.js + Express routes
+        |
+        v
+Controllers
+        |
+        v
+PostgreSQL repository using pg and parameterized SQL
+        |
+        v
+PostgreSQL database, commonly hosted by Neon
+
+External services:
+- Cloudinary: uploaded course and lecture media
+- Razorpay: paid-course order and payment processing
+- JWT: stateless authentication tokens
+- Puppeteer: server-side certificate PDF rendering
+```
+
+The server listens on `PORT`, defaulting to port 5000, and exposes `GET /health` for a basic service/database status response.
+
+## 2. Technology Stack
+
+| Technology | What it is | Where it is used here | Why it is useful here |
+|---|---|---|---|
+| React 18 | UI library | `client/src` pages and components | Builds the interactive student and instructor interface. |
+| React Router DOM | Client-side routing library | `client/src/App.jsx` | Maps URLs such as `/courses`, `/course-progress/:id`, and `/instructor` to React pages. |
+| Node.js | JavaScript server runtime | `server/server.js` and backend modules | Runs the API and server-side integrations. |
+| Express 4 | HTTP server framework | Server routes, middleware, and error handler | Defines endpoints and processes requests. |
+| PostgreSQL | Relational database | Schema in `server/migrations/001_initial_schema.sql` | Represents users, courses, purchases, progress, reviews, and certificates with foreign keys and constraints. |
+| Neon | Managed/serverless PostgreSQL platform | Supported through `DATABASE_URL`; the code does not call a Neon-specific SDK | Provides hosted PostgreSQL connectivity. The exact deployed Neon project is not confirmed from source. |
+| `pg` | Node.js PostgreSQL driver | `server/config/postgres.js` and `server/repositories/postgres-repository.js` | Provides connection pooling and SQL execution. |
+| `bcryptjs` | Password hashing library | Authentication controller | Hashes registration passwords and compares hashes at login. |
+| `jsonwebtoken` | JWT creation and verification library | Authentication controller and middleware | Creates 120-minute access tokens and verifies protected requests. |
+| Cloudinary SDK | Cloud media storage API client | `server/helpers/cloudinary.js` and media routes | Stores uploaded files remotely and returns media URLs/public IDs. |
+| Razorpay SDK | Payment gateway client | Student order controller | Creates Razorpay orders for paid courses. |
+| Puppeteer | Browser automation/rendering library | `server/helpers/pdf-generator.js` | Renders certificate HTML in Chromium and returns a PDF. |
+| Multer | Multipart upload middleware | Media routes | Reads single and multiple uploaded files. |
+| Axios | HTTP client | `client/src/api/axiosInstance.js` and services | Sends frontend requests and attaches the JWT bearer token. |
+| Vite | Frontend development/build tool | `client/package.json`, `vite.config.js` | Runs the client dev server and creates production bundles. |
+| Tailwind CSS | Utility-first CSS framework | Client configuration and JSX classes | Styles the interface. |
+| Radix UI | Accessible unstyled UI primitives | Client UI components | Provides controls such as dialogs, tabs, select, checkbox, toast, and slider. |
+| Framer Motion | Animation library | Client components/pages | Adds frontend transitions and motion. |
+| React Player | Media player component | Video player component | Plays course lecture media. |
+| `react-confetti` | Confetti UI component | Completion-related frontend UI | Provides a visual completion effect where used. |
+| Mongoose | MongoDB ODM | Migration and verification scripts only | Reads legacy MongoDB data for migration/verification; it is not the active API persistence layer. |
+| `dotenv` | Environment loader | `server/server.js` | Loads server environment variables from `.env`. |
+| CORS | Express CORS middleware | `server/server.js` | Limits browser origins to configured localhost development origins. |
+
+## 3. Actual Project Structure
+
+```text
+MERN-LMS-2024/
+|-- README.md                         Existing root documentation
+|-- RUN_PROJECT.md                     Existing run notes
+|-- aboutproject.txt                   This source-grounded study guide
+|-- client/
+|   |-- package.json                   Client scripts and dependencies
+|   |-- vite.config.js                 Vite configuration
+|   |-- tailwind.config.js             Tailwind configuration
+|   |-- src/
+|       |-- App.jsx                    Active route and application state owner
+|       |-- main.jsx                   React entry point and BrowserRouter setup
+|       |-- api/axiosInstance.js       Axios base URL and JWT interceptor
+|       |-- config/                    Initial forms and frontend configuration
+|       |-- components/                Shared, student, instructor, UI, and media components
+|       |-- context/                   Auth, student, and instructor contexts; not mounted by main.jsx
+|       |-- hooks/                     Frontend hooks such as toast
+|       |-- lib/                       Frontend helpers
+|       |-- pages/                     Auth, landing, student, instructor, profile, and 404 pages
+|       |-- services/index.js           API service functions
+|-- server/
+    |-- package.json                   Server dependencies and npm scripts
+    |-- server.js                      Express app, middleware, route mounting, health endpoint
+    |-- config/postgres.js              pg Pool and PostgreSQL connection test
+    |-- controllers/                   Request-level application behavior
+    |   |-- auth-controller/
+    |   |-- instructor-controller/
+    |   |-- student-controller/
+    |-- routes/                         Express endpoint declarations
+    |   |-- auth-routes/
+    |   |-- instructor-routes/
+    |   |-- student-routes/
+    |-- repositories/postgres-repository.js
+    |                                   SQL queries and row-to-API mapping
+    |-- migrations/001_initial_schema.sql
+    |                                   PostgreSQL tables, constraints, and indexes
+    |-- models/                          Legacy/compatibility model files
+    |-- middleware/auth-middleware.js    JWT bearer-token verification
+    |-- helpers/cloudinary.js             Cloudinary configuration
+    |-- helpers/pdf-generator.js          Certificate HTML/PDF generation
+    |-- scripts/run-schema.js             Applies the SQL schema
+    |-- scripts/migrate-mongo-to-postgres.js
+    |                                   Imports legacy MongoDB data
+    |-- scripts/verify-migration.js       Compares migration counts
+    |-- uploads/                          Multer temporary upload location
+```
+
+Important files to study first:
+
+1. `server/migrations/001_initial_schema.sql`
+2. `server/repositories/postgres-repository.js`
+3. `server/server.js`
+4. `server/controllers/auth-controller/index.js`
+5. `server/middleware/auth-middleware.js`
+6. `server/controllers/student-controller/order-controller.js`
+7. `server/controllers/student-controller/course-progress-controller.js`
+8. `server/controllers/student-controller/certificate-controller.js`
+9. `client/src/App.jsx`
+10. `client/src/api/axiosInstance.js`
+11. `client/src/services/index.js`
+12. `client/src/pages/student/course-details/index.jsx`
+13. `client/src/pages/student/course-progress/index.jsx`
+
+## 4. PostgreSQL Database
+
+The schema creates ten important tables.
+
+### `users`
+
+Purpose: stores account identity and authentication data.
+
+- Primary key: `id VARCHAR(64)`.
+- Important columns: `user_name`, unique `user_email`, hashed `password`, `role` defaulting to `user`, and `created_at`.
+- Constraints: `user_name`, `user_email`, `password`, and `role` are required; email is unique.
+- Relationships: referenced by courses, enrollments, course_students, orders, course_progress, reviews, and certificates.
+- Delete behavior: dependent records vary by relationship. Instructor ownership is restricted; many student records cascade.
+
+### `courses`
+
+Purpose: stores course metadata and instructor ownership.
+
+- Primary key: `id VARCHAR(64)`.
+- Important columns: `instructor_id`, title, category, level, primary language, subtitle, description, image, welcome message, pricing, objectives, `is_published`, timestamps.
+- Foreign key: `instructor_id` references `users(id)` with `ON DELETE RESTRICT`.
+- Indexes: `courses_instructor_idx` and `courses_category_idx`.
+- Note: the repository maps the database `is_published` field to the misspelled API property `isPublised`.
+
+### `lectures`
+
+Purpose: stores ordered course curriculum items and Cloudinary media references.
+
+- Primary key: `id VARCHAR(64)`.
+- Foreign key: `course_id` references `courses(id)` with `ON DELETE CASCADE`.
+- Important columns: `position`, title, `video_url`, `public_id`, `free_preview`, and `is_legacy`.
+- Constraint: `(course_id, position)` is unique.
+- Delete behavior: deleting a course deletes its lectures. Legacy lectures are excluded by active course queries and completion calculations.
+
+### `enrollments`
+
+Purpose: records a user's access/purchase relationship with a course.
+
+- Primary key: auto-generated `id BIGSERIAL`.
+- Foreign keys: `user_id` references users with `ON DELETE CASCADE`; `course_id` references courses with `ON DELETE CASCADE`.
+- Important columns: course title/instructor snapshot, purchase date, image, and paid amount.
+- Constraint: `(user_id, course_id)` is unique, preventing duplicate enrollment rows.
+
+### `course_students`
+
+Purpose: stores the instructor-facing student membership snapshot for a course.
+
+- Composite primary key: `(course_id, student_id)`.
+- Foreign keys: both course and student reference their parent tables with `ON DELETE CASCADE`.
+- Important columns: student name/email, paid amount, and creation time.
+- This is a junction table representing a many-to-many relationship between users and courses, with additional attributes.
+
+### `orders`
+
+Purpose: stores payment/order lifecycle information.
+
+- Primary key: `id VARCHAR(64)`.
+- Foreign keys: `user_id` references users with `ON DELETE RESTRICT`; nullable `course_id` references courses with `ON DELETE SET NULL`.
+- Important columns: order/payment status, payment method, Razorpay payment ID, payer ID, course/user snapshots, course pricing, and dates.
+- Indexes: `orders_user_idx` and `orders_payment_idx`.
+- The schema does not define a check constraint for valid status strings.
+
+### `course_progress`
+
+Purpose: stores one overall progress record per user/course.
+
+- Primary key: auto-generated `id BIGSERIAL`.
+- Foreign keys: user and course, both `ON DELETE CASCADE`.
+- Important columns: `completed`, `completion_date`.
+- Constraint: `(user_id, course_id)` is unique.
+
+### `lecture_progress`
+
+Purpose: stores completion/viewing state for individual lectures.
+
+- Composite primary key: `(progress_id, lecture_id)`.
+- Foreign keys: `progress_id` references course_progress with `ON DELETE CASCADE`; `lecture_id` references lectures with `ON DELETE CASCADE`.
+- Important columns: `viewed`, `date_viewed`.
+- It is the child/detail table behind course-level progress.
+
+### `reviews`
+
+Purpose: stores user ratings and written reviews.
+
+- Primary key: `id VARCHAR(64)`.
+- Foreign keys: course and user, both `ON DELETE CASCADE`.
+- Important columns: user name snapshot, integer rating, review text, timestamps.
+- Constraints: rating must be between 1 and 5; `(course_id, user_id)` is unique.
+- Index: `reviews_course_created_idx` on course and descending creation time.
+
+### `certificates`
+
+Purpose: stores generated certificate identity and completion information.
+
+- Primary key: `id VARCHAR(64)`.
+- Foreign keys: course and user, both `ON DELETE CASCADE`.
+- Important columns: globally unique `certificate_id`, completion date, downloaded time, timestamps.
+- Constraints: `certificate_id` is unique and `(course_id, user_id)` is unique.
+
+### Relationship diagram
+
+```text
+users
+  |-- courses (instructor_id)
+  |-- enrollments -- courses
+  |-- course_students -- courses
+  |-- orders -- courses (nullable)
+  |-- course_progress -- courses
+  |                    |-- lecture_progress -- lectures -- courses
+  |-- reviews -- courses
+  |-- certificates -- courses
+```
+
+The schema uses foreign keys for referential integrity. It uses one-to-many relationships such as one instructor to many courses and one course to many lectures. It uses junction tables for user/course enrollment and instructor-side student membership. Unique constraints prevent duplicate user emails, duplicate enrollment, duplicate progress, duplicate reviews, duplicate certificates per course/user, and duplicate lecture positions within a course.
+
+The schema is partly normalized: core relationships are separate tables, while order/enrollment/review rows intentionally keep snapshots such as course title, instructor name, and user name/email. This can preserve historical display data but can also become stale if source records change.
+
+There are no explicit indexes shown for every foreign key. The exact query plan and runtime performance are Not confirmed from the current implementation.
+
+## 5. Why PostgreSQL Instead of MongoDB?
+
+This LMS has connected entities and rules: users own courses, courses contain ordered lectures, students enroll in courses, orders create enrollment, progress belongs to a user/course and individual lectures, and reviews/certificates belong to both users and courses. PostgreSQL expresses these relationships directly with foreign keys, joins, composite keys, unique constraints, and transactions.
+
+MongoDB could model the same data, but the current design benefits from relational tables because:
+
+- `JOIN` can combine course metadata with ordered lectures and course students.
+- Foreign keys reject references to missing users, courses, lectures, or progress records.
+- Unique constraints prevent duplicate enrollment, reviews, and certificates at the database boundary.
+- Transactions group related changes, especially payment confirmation, course saving, and progress updates.
+- Indexes support common lookups such as instructor courses, course categories, order payment IDs, and course review dates.
+- Normalized tables avoid storing an entire lecture list inside every course document.
+
+A concise interview answer: PostgreSQL fits because the LMS is relationship-heavy and requires consistency across payments, enrollment, progress, reviews, and certificates. The source uses direct `pg` queries rather than an ORM, so SQL, constraints, and transactions are visible in the repository.
+
+## 6. Neon and Database Connection
+
+Neon is a hosted PostgreSQL service. The application connects through the standard PostgreSQL `DATABASE_URL`; it does not use a Neon-specific client library. `server/config/postgres.js` creates a `pg.Pool` with that connection string. If a URL exists, SSL is configured with `rejectUnauthorized: false`.
+
+The code checks the connection with `SELECT NOW()` during server startup and reports `connected` or `disconnected` in `/health`. Connection pool size and Neon deployment settings are Not confirmed from the current implementation. PostgreSQL is the database engine underneath Neon; Neon is the hosting/service layer.
+
+Never place a real connection string or credentials in this document.
+
+## 7. Backend Architecture and Request Flow
+
+```text
+Frontend request
+   -> Express route
+   -> optional JWT middleware
+   -> controller
+   -> PostgreSQL repository/helper
+   -> database or external service
+   -> JSON/PDF response
+```
+
+- Routes declare URL patterns and connect them to handlers.
+- Middleware verifies a bearer JWT for the routes where it is attached.
+- Controllers read request input, apply business checks, call repositories/services, and choose HTTP responses.
+- The repository centralizes SQL, transactions, generated IDs, and conversion from snake_case database columns to API-shaped objects.
+- Helpers integrate with Cloudinary and Puppeteer.
+
+The repository uses `crypto.randomBytes(12).toString("hex")` for most string IDs. Course save, progress updates, progress reset, and payment confirmation explicitly use `BEGIN`, `COMMIT`, and `ROLLBACK`.
+
+## 8. API Documentation
+
+Base URL in development: `http://127.0.0.1:5000`, unless `VITE_API_BASE_URL` changes the client base URL. Authentication means an `Authorization: Bearer <JWT>` header. Endpoints described as public below have no server auth middleware in the route file, even if the frontend normally reaches them through a guarded screen.
+
+### General and Authentication
+
+| Method | Endpoint | Auth | Input | Purpose and data |
+|---|---|---|---|---|
+| GET | `/health` | No | None | Returns API service status and PostgreSQL connection status. |
+| POST | `/auth/register` | No | `userName`, `userEmail`, `password`, optional `role` | Checks duplicate name/email, hashes password, inserts `users`; returns 201 on success. |
+| POST | `/auth/login` | No | `userEmail`, `password` | Looks up `users`, compares bcrypt hash, returns user fields and a JWT. |
+| GET | `/auth/check-auth` | Yes | Header | Returns the verified JWT payload as the current user. |
+| GET | `/auth/profile` | Yes | Header | Returns profile-related counts from users, orders, and instructor courses. `joinedDate` is returned as null by the current controller. |
+
+### Courses and Instructor Management
+
+| Method | Endpoint | Auth | Input | Purpose and data |
+|---|---|---|---|---|
+| GET | `/student/course/get` | No | `category`, `level`, `primaryLanguage` comma-separated; `sortBy` | Lists courses with optional filters and price/title sorting; reads courses and non-legacy lectures. |
+| GET | `/student/course/get/details/:id` | No | Path course ID | Returns one course with curriculum and course students. |
+| GET | `/student/course/purchase-info/:id/:studentId` | No | Path course/student IDs | Checks `enrollments` for a matching pair. |
+| POST | `/instructor/course/add` | No server middleware | Course object and curriculum | Saves course metadata and replaces/inserts lecture rows. |
+| GET | `/instructor/course/get` | No server middleware | Optional `instructorId` query | Lists courses, optionally by instructor. |
+| GET | `/instructor/course/get/details/:id` | No server middleware | Path course ID | Gets course details. |
+| PUT | `/instructor/course/update/:id` | No server middleware | Course object and curriculum | Upserts course metadata and replaces all lectures in a transaction. |
+| POST | `/media/upload` | No server middleware | Multipart `file` | Uploads one file using Multer and Cloudinary. |
+| POST | `/media/bulk-upload` | No server middleware | Multipart `files`, maximum 10 | Uploads multiple files. |
+| DELETE | `/media/delete/:id` | No server middleware | Cloudinary public ID path parameter | Deletes media from Cloudinary. |
+
+### Enrollment, Payments, and Student Courses
+
+| Method | Endpoint | Auth | Input | Purpose and data |
+|---|---|---|---|---|
+| POST | `/api/payment/create-order` | No server middleware | Amount and client-supplied user/course fields | Inserts a pending `orders` row, creates a Razorpay INR order using amount times 100, stores the Razorpay order ID in `payment_id`. |
+| POST | `/api/payment/verify` | No server middleware | `razorpay_order_id`, `razorpay_payment_id`, `razorpay_signature` | HMAC-verifies payment signature, confirms order, inserts `enrollments` and `course_students` transactionally. |
+| GET | `/student/courses-bought/get/:studentId` | No server middleware | Path student ID | Returns enrollment rows ordered by purchase date. |
+
+### Progress and Certificates
+
+| Method | Endpoint | Auth | Input | Purpose and data |
+|---|---|---|---|---|
+| GET | `/student/course-progress/get/:userId/:courseId` | No server middleware | Path IDs | Returns course progress and lecture progress; paid-course access is checked by enrollment, while free-course access is allowed. |
+| POST | `/student/course-progress/mark-lecture-viewed` | No server middleware | `userId`, `courseId`, `lectureId` | Creates/updates course and lecture progress, then recalculates completion across non-legacy lectures. |
+| POST | `/student/course-progress/reset-progress` | No server middleware | `userId`, `courseId` | Deletes lecture progress and resets course completion. |
+| GET | `/api/certificate/:courseId` | Yes | Header and course ID | Requires enrollment and completed progress, generates certificate data/PDF, and returns an attachment. |
+
+### Reviews
+
+| Method | Endpoint | Auth | Input | Purpose and data |
+|---|---|---|---|---|
+| POST | `/api/reviews/create` | Yes | `courseId`, `rating`, `review` | Validates course/access/rating and inserts one review. |
+| GET | `/api/reviews/course/:courseId` | No | Course ID | Returns reviews, average rating, and count. |
+| PUT | `/api/reviews/update/:reviewId` | Yes | `rating`, `review` | Updates only the authenticated review owner row. |
+| DELETE | `/api/reviews/delete/:reviewId` | Yes | Review ID | Deletes only the authenticated review owner row. |
+
+The exact JSON response shape for every controller, beyond the behavior summarized above, is Not confirmed from the current implementation.
+
+## 9. Authentication
+
+```text
+Register
+  -> bcryptjs.hash(password, 10)
+  -> INSERT users
+
+Login
+  -> SELECT user by email
+  -> bcrypt.compare(password, stored hash)
+  -> jwt.sign(user fields, JWT_SECRET, expiresIn 120m)
+
+Frontend
+  -> stores token in sessionStorage["accessToken"]
+  -> Axios adds Authorization: Bearer token
+
+Protected route
+  -> middleware reads Authorization
+  -> jwt.verify(token, JWT_SECRET)
+  -> req.user = payload
+  -> controller runs
+```
+
+The JWT payload contains `_id`, `userName`, `userEmail`, and `role`. The expiration is exactly 120 minutes. The code falls back to the literal `JWT_SECRET` if the environment variable is missing; this is a security weakness and should be fixed in production. The middleware verifies the token and returns status 401 for a missing or invalid token.
+
+Role-aware redirects exist in the React `RouteGuard`, but server-side role authorization is not consistently implemented. In particular, instructor course and media routes do not attach the JWT middleware. Frontend route guards cannot protect direct API calls.
+
+## 10. Paid Course Purchase Flow
+
+The current flow is:
+
+```text
+Student chooses paid course
+  -> frontend sends create-order data
+  -> server inserts pending orders row
+  -> server creates Razorpay order for amount * 100 INR
+  -> Razorpay order ID is stored in orders.payment_id
+  -> payment UI completes
+  -> frontend sends Razorpay order ID, payment ID, signature
+  -> server computes HMAC-SHA256(order_id|payment_id)
+  -> signature comparison succeeds
+  -> transaction marks order paid/confirmed
+  -> transaction inserts enrollments row
+  -> transaction inserts course_students row
+  -> access lookup finds enrollment
+```
+
+Verification is necessary because the browser request alone is not proof that Razorpay accepted payment. The server checks the signature using the Razorpay secret. The database transaction prevents the order status from committing without the related enrollment/student records. Conflict handling makes repeated confirmation idempotent for enrollment and course-student rows.
+
+Important limitation: order creation trusts client-supplied amount, user, and course data. The current code does not independently reload the course price or derive the user from a verified server-side identity for this endpoint. Also, the payment routes have no server auth middleware.
+
+## 11. Free Courses
+
+The progress controller treats a course with pricing equal to zero as accessible without an enrollment row. Paid courses require a matching enrollment for progress access. The frontend bypasses payment for free courses.
+
+The repository does not create an `enrollments` row for the free-course path shown by the current implementation. Therefore a free course may be accessible in learning/progress behavior but may not appear in the enrollment-backed My Courses list. The exact review behavior for every free-course UI path is Not confirmed from the current implementation; the controller's paid-course enrollment check is the confirmed rule.
+
+## 12. Progress Tracking
+
+`course_progress` is the parent record for one user/course. `lecture_progress` stores viewed state for individual lectures.
+
+When a lecture is marked viewed, the repository:
+
+1. Begins a transaction.
+2. Inserts or finds the unique user/course progress record.
+3. Inserts or updates the lecture progress row with `viewed = TRUE` and the current timestamp.
+4. Counts all non-legacy lectures for the course and all viewed lecture progress rows for that progress record.
+5. Sets course completion to true only when total lectures is greater than zero and total equals viewed.
+6. Sets `completion_date` once when complete, and clears it if the course is no longer complete.
+7. Commits and returns the progress query.
+
+Reset deletes child lecture progress and sets course completion false and completion date null in a transaction. The source does not show automatic certificate creation at the moment completion becomes true. Certificate availability is checked when the certificate endpoint is requested.
+
+## 13. Reviews
+
+Review creation requires a JWT. The controller verifies that the course exists, validates the rating, and requires enrollment for paid courses. The database also enforces rating 1 through 5 and a unique `(course_id, user_id)` pair, which prevents a second review for the same course/user.
+
+Review updates and deletes include both the review ID and authenticated `req.user._id` in the SQL condition. This is the ownership check. Review retrieval is public and orders records by newest creation time; the course review controller also returns average rating and total count.
+
+The exact validation rules for review text length are Not confirmed from the current implementation.
+
+## 14. Certificate System
+
+The certificate endpoint requires JWT authentication, enrollment, and completed course progress. The repository stores a certificate ID, course/user IDs, completion date, and download timestamp. Certificate IDs are generated using `LMS-` plus eight random bytes encoded as uppercase hexadecimal.
+
+`createOrUpdateCertificate` inserts the certificate and sets `downloaded_at` to `NOW()`. If the same course/user already has a certificate, the conflict path updates the download timestamp. The certificate helper builds HTML and uses Puppeteer/Chromium to render a PDF. The controller returns the PDF as a downloadable attachment.
+
+The exact PDF styling and runtime Chromium availability are Not confirmed beyond the checked-in `pdf-generator.js` implementation.
+
+## 15. Cloudinary and Media Uploads
+
+Cloudinary is used for uploaded course/lecture media. The helper reads `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET`. Course rows keep image URLs, while lecture rows keep `video_url` and `public_id` values.
+
+Multer accepts a single `file` for `/media/upload` and up to ten `files` for `/media/bulk-upload`. The checked-in implementation writes uploaded files under `server/uploads` before Cloudinary processing. Temporary-file cleanup after upload is not present in the inspected helper/routes, so it should be reviewed for disk growth.
+
+The source does not confirm an enforced file-size/type policy, server-side ownership check, or authenticated media endpoint.
+
+## 16. Frontend Architecture
+
+`client/src/main.jsx` mounts the React application and `BrowserRouter`. The active application state is owned in `App.jsx`, including authentication, student courses, bought courses, current progress, and instructor course-editor state.
+
+Active client paths include:
+
+- Public: `/`, `/auth`, `/courses`, `/course/details/:id`
+- Student: `/home`, `/student-courses`, `/course-progress/:id`, `/profile`
+- Instructor: `/instructor`, `/instructor/create-new-course`, `/instructor/edit-course/:courseId`
+- Fallback: `*` to the not-found page
+
+`RouteGuard` handles browser navigation based on authentication and role. It redirects unauthenticated users to `/auth`, regular users away from instructor pages, and instructors toward instructor pages except profile. It is a UI routing control, not API authorization.
+
+`axiosInstance.js` uses `VITE_API_BASE_URL` or `http://127.0.0.1:5000`, enables `withCredentials`, reads `sessionStorage.accessToken`, and adds a bearer header. It removes the Content-Type header for FormData uploads. It logs request configuration and response/error details, which should be reduced in production because request configuration may contain sensitive information.
+
+Auth, student, and instructor React context files exist, but `main.jsx` does not mount their providers. The active state path is `App.jsx`; the contexts should not be described as the active global state mechanism without further code changes.
+
+## 17. Main User Journeys
+
+### Student
+
+```text
+Register -> Login -> browse /courses -> view course details
+  -> free course access OR Razorpay payment
+  -> learning page -> mark lectures viewed
+  -> course completion -> request certificate PDF
+  -> create/update/delete review subject to access and ownership rules
+```
+
+For paid access, the confirmed backend record is the enrollment inserted after successful payment verification. For free access, progress access can be allowed without the same enrollment record. A complete browser end-to-end journey is Not confirmed as tested by the repository.
+
+### Instructor
+
+```text
+Login -> instructor dashboard -> create course
+  -> upload thumbnail/lecture media -> add curriculum
+  -> save or update course -> view course list/details
+```
+
+The code supports instructor pages and course/media APIs. Server-side instructor ownership authorization is not attached to those route files, so the implemented browser role flow is stronger than the direct API authorization.
+
+## 18. SQL Concepts Visible in the Repository
+
+- `SELECT`: finds users, courses, orders, reviews, certificates, enrollments, and progress.
+- `INSERT`: creates users, courses, lectures, orders, enrollments, student memberships, progress, reviews, and certificates.
+- `UPDATE`: changes courses, order payment status, review content, lecture viewed state, and completion state.
+- `DELETE`: deletes old lectures during course save, review rows, lecture progress during reset, and Cloudinary media through the external API.
+- `JOIN`: combines course progress with lecture progress and builds course-associated data through subqueries.
+- `WHERE`: scopes queries by IDs, users, courses, payment IDs, and ownership.
+- `ORDER BY`: sorts courses by configured price/title order, enrollments by purchase date, lectures by position, and reviews by creation time.
+- Parameterized queries: `$1`, `$2`, and subsequent placeholders pass values separately from SQL text and reduce SQL injection risk.
+- Transactions: `BEGIN`, `COMMIT`, and `ROLLBACK` protect multi-step course save, progress update/reset, and payment confirmation.
+- `COUNT`: counts courses/orders and calculates total versus viewed lectures.
+- Aggregation: `json_agg`, `json_build_object`, and review average/count create nested API data.
+- `ON CONFLICT`: prevents duplicate user/course progress, enrollment, student membership, lecture progress, and certificates; course save uses upsert behavior.
+
+One useful interview example is payment confirmation: an order update alone is insufficient, so the repository updates the order and inserts both access records in one transaction. If any statement fails, the catch block rolls back.
+
+## 19. Security: Implemented and Missing
+
+Confirmed mechanisms:
+
+- Passwords are hashed with bcryptjs using cost factor 10.
+- JWTs are signed and verified.
+- Parameterized SQL is used throughout the PostgreSQL repository.
+- CORS allows a fixed set of localhost origins and credentials.
+- Review update/delete checks authenticated ownership in SQL.
+- Paid progress/certificate/review paths check enrollment where implemented.
+- Razorpay signature verification uses HMAC-SHA256.
+- Secrets are intended to come from environment variables.
+
+Important weaknesses or gaps:
+
+- JWT_SECRET has an insecure fallback literal.
+- Many endpoints have no server-side authentication: instructor course/media, payment, enrollment listing, and progress routes are examples.
+- Role and instructor ownership are not enforced in the relevant route/controller path.
+- Payment creation trusts client-supplied amount and identity/course fields.
+- The middleware takes `authHeader.split(" ")[1]` without explicitly validating the Bearer scheme.
+- Input validation is limited in the inspected code; comprehensive schema validation is Not confirmed.
+- Client and server log request details and authorization-related diagnostics.
+- Upload type/size and temporary-file cleanup controls are not confirmed.
+- CSRF posture for credentialed requests is Not confirmed.
+
+## 20. Error Handling
+
+The Express global error handler logs the error message and returns status 500 with `{ success: false, message: "Something went wrong" }`. CORS errors are translated to status 403. Controllers commonly return status 400 for duplicate/invalid input, 401 for invalid credentials or tokens, 404 for missing resources, 500 for caught server errors, and 201/200 for successful creation/retrieval.
+
+The frontend uses Axios rejection handling and console logging in `App.jsx`, services, and the Axios interceptors. The application displays loading skeletons in several areas. Exact loading and empty/error presentation varies by page; a complete UI error-state inventory is Not confirmed.
+
+## 21. Environment Variables
+
+Names found in source or project configuration are listed without values:
+
+### Active server settings
+
+```text
+PORT
+NODE_ENV
+DATABASE_URL
+JWT_SECRET
+RAZORPAY_KEY_ID
+RAZORPAY_SECRET
+CLOUDINARY_CLOUD_NAME
+CLOUDINARY_API_KEY
+CLOUDINARY_API_SECRET
+```
+
+### Migration/legacy scripts
+
+```text
+MONGO_URI
+```
+
+`MONGO_URI` is used by migration/verification scripts, not the active PostgreSQL API repository.
+
+### Frontend
+
+```text
+VITE_API_BASE_URL
+VITE_RAZORPAY_KEY_ID
+REACT_APP_RAZORPAY_KEY_ID
+```
+
+The frontend has fallback support for the React-style Razorpay key name in the inspected configuration. `JWT_EXPIRE`, `CLIENT_URL`, and email variable names appear in local configuration/documentation but are not read by the active server code. Their operational use is Not confirmed.
+
+## 22. Exact Local Setup
+
+Prerequisites:
+
+- Node.js and npm.
+- A PostgreSQL-compatible database. The source supports a Neon PostgreSQL connection through `DATABASE_URL`.
+- Cloudinary credentials for media features.
+- Razorpay credentials for paid-course features.
+- A Chromium-compatible Puppeteer runtime for certificate PDFs.
+- MongoDB is required only if using the legacy migration or verification scripts.
+
+Server:
+
+```text
+cd server
+npm install
+# create server/.env with the required variable names and real local values
+npm run db:schema
+npm run dev
+```
+
+`npm run db:schema` runs `node scripts/run-schema.js`. The server starts with `npm start` using `node server.js`, or `npm run dev` using nodemon. The default API port is 5000.
+
+Optional legacy migration commands:
+
+```text
+npm run db:migrate
+npm run db:verify
+```
+
+These scripts use MongoDB source data and are separate from the active PostgreSQL request path.
+
+Client:
+
+```text
+cd client
+npm install
+# optionally create client/.env with VITE_API_BASE_URL and Razorpay frontend key
+npm run dev
+```
+
+The Vite development server normally uses port 5173. The backend CORS list explicitly includes ports 5173, 5174, and 5175 for localhost/127.0.0.1.
+
+Build and checks:
+
+```text
+cd client
+npm run build
+npm run lint
+npm run preview
+```
+
+The server test script is currently a placeholder that prints `Error: no test specified` and exits with failure. The project does not define an automated backend test suite in `server/package.json`.
+
+## 23. Testing and Current Verification Status
+
+### Verified from source inspection
+
+- PostgreSQL connection test exists and runs `SELECT NOW()`.
+- Schema migration command exists and applies the SQL file.
+- Migration verification command exists and compares MongoDB/PostgreSQL counts.
+- Foreign keys, unique constraints, indexes, and cascade behavior are explicitly present in the SQL schema.
+- Course listing, authentication, enrollment lookup, progress lookup, payment, review, certificate, and media API paths are present in code.
+- Frontend production build and lint commands are defined.
+
+### Not fully tested or not runtime-confirmed here
+
+- A live PostgreSQL/Neon connection.
+- Successful Razorpay order creation and signature verification against real credentials.
+- Successful Cloudinary upload/delete.
+- Puppeteer certificate rendering in the current machine environment.
+- Complete paid and free course browser flows.
+- Production frontend build output and current lint result in this documentation run.
+- Full end-to-end integration tests.
+
+The repository's `npm test` server command is explicitly not a real test suite.
+
+## 24. Known Limitations and Technical Debt
+
+- Server-side authentication/authorization is missing from many business routes.
+- Instructor ownership is not checked before course update or media operations.
+- Payment creation accepts client-provided amount and identifying fields.
+- Free-course access and enrollment-backed My Courses behavior are inconsistent.
+- Active PostgreSQL behavior and older MongoDB documentation/configuration coexist.
+- The `.env.example`/documentation naming may differ from code, especially `RAZORPAY_SECRET` versus `RAZORPAY_KEY_SECRET`.
+- No automated backend tests are defined.
+- Temporary Multer upload files may remain on disk.
+- The frontend currently contains lint issues if the configured rules still report them; the exact current count is Not confirmed from this source inspection.
+- The HTML title/favicon still use Vite defaults according to the inspected project state.
+- Database status is checked asynchronously after the server begins listening, so startup can report the API as running before the status changes to connected/disconnected.
+- Status columns use free-text values without database checks.
+
+## 25. Interview Questions and Answers
+
+The following questions are tied to the current implementation.
+
+### General Project
+
+**1. Question:** What does this LMS do?
+
+**What the interviewer is testing:** Whether you understand the product and main flows.
+
+**Answer:** It supports student authentication, course discovery, free or paid access, lecture progress, reviews, certificates, and instructor course management. PostgreSQL stores the core data, while Cloudinary, Razorpay, JWT, and Puppeteer support external concerns.
+
+**Possible follow-up:** Which flow has the strongest transactional requirement? Payment confirmation, because order status and access records must stay consistent.
+
+**2. Question:** What are the main roles?
+
+**What the interviewer is testing:** Understanding of authorization boundaries.
+
+**Answer:** The database stores a `role`, normally `user` or `instructor`. React redirects users based on role, but server-side role authorization is incomplete in the current implementation.
+
+**Possible follow-up:** Is the frontend guard enough? No. Direct API calls must also be authorized on the server.
+
+**3. Question:** Where is the main application state managed?
+
+**What the interviewer is testing:** Frontend architecture knowledge.
+
+**Answer:** The active state is managed in `App.jsx`, including auth, course lists, purchased courses, progress, and instructor editor state. Context files exist but are not mounted by `main.jsx`.
+
+**Possible follow-up:** What would you refactor? I would choose one active state strategy and remove or intentionally mount the unused contexts.
+
+**4. Question:** What is the backend request flow?
+
+**What the interviewer is testing:** Layer separation.
+
+**Answer:** The request enters Express, passes any attached middleware, reaches a controller, calls the PostgreSQL repository or helper, and returns JSON or a PDF.
+
+**Possible follow-up:** Why keep SQL in a repository? It centralizes persistence and keeps controllers focused on request behavior.
+
+### React
+
+**5. Question:** How does the client protect pages?
+
+**What the interviewer is testing:** Routing and auth state.
+
+**Answer:** `RouteGuard` checks `authenticated` and `user.role`, redirecting unauthenticated users to `/auth` and routing instructors/students to their applicable areas.
+
+**Possible follow-up:** Does it protect the API? No.
+
+**6. Question:** How is login persistence implemented?
+
+**What the interviewer is testing:** Browser storage and startup behavior.
+
+**Answer:** The token is JSON-stringified into `sessionStorage.accessToken`; on startup, the app calls `/auth/check-auth` and Axios adds the token to requests.
+
+**Possible follow-up:** What happens when the tab/session ends? Session storage is normally cleared by the browser session lifecycle.
+
+**7. Question:** How are course media uploads sent?
+
+**What the interviewer is testing:** FormData handling.
+
+**Answer:** The client sends FormData through Axios. The request interceptor removes Content-Type so the browser can set the multipart boundary, and the server uses Multer.
+
+**Possible follow-up:** What is the media backend? Cloudinary.
+
+**8. Question:** Which page handles lecture learning?
+
+**What the interviewer is testing:** Ability to navigate the codebase.
+
+**Answer:** `client/src/pages/student/course-progress/index.jsx` uses progress services to load progress, mark lectures viewed, reset progress, and download certificates.
+
+**Possible follow-up:** How is video rendered? The project includes a React Player component.
+
+### Node.js and Express
+
+**9. Question:** Why use Express middleware?
+
+**What the interviewer is testing:** HTTP pipeline understanding.
+
+**Answer:** The app uses CORS, request logging, JSON parsing, JWT middleware on selected routes, and a final error handler as reusable request-processing stages.
+
+**Possible follow-up:** What is the risk of only using route guards? API callers can bypass the browser.
+
+**10. Question:** What does `/health` verify?
+
+**What the interviewer is testing:** Operational awareness.
+
+**Answer:** It returns service metadata and the in-memory PostgreSQL status, which is updated after `testPostgresConnection()` runs `SELECT NOW()`.
+
+**Possible follow-up:** Is it a full readiness probe? Not necessarily; it does not prove every external service works.
+
+**11. Question:** How does the global error handler behave?
+
+**What the interviewer is testing:** Failure behavior.
+
+**Answer:** It logs the error, maps CORS errors to 403, and otherwise returns a generic 500 response.
+
+**Possible follow-up:** What is missing? More precise typed errors and consistent validation responses.
+
+**12. Question:** Why use a connection pool?
+
+**What the interviewer is testing:** Database resource management.
+
+**Answer:** `pg.Pool` reuses database connections across requests rather than opening a new connection for every query.
+
+**Possible follow-up:** How are transactions handled? A dedicated pool client is acquired, used for BEGIN/COMMIT/ROLLBACK, then released.
+
+### PostgreSQL and SQL
+
+**13. Question:** What is the primary key of `course_students`?
+
+**What the interviewer is testing:** Composite key knowledge.
+
+**Answer:** `(course_id, student_id)` is the composite primary key, so one student cannot be inserted twice for the same course.
+
+**Possible follow-up:** Is this the same as `enrollments`? Enrollment has a separate BIGSERIAL ID plus a unique user/course pair.
+
+**14. Question:** How are lectures ordered?
+
+**What the interviewer is testing:** Data modeling.
+
+**Answer:** Each lecture has a `position`; `(course_id, position)` is unique, and course JSON aggregation orders by position.
+
+**Possible follow-up:** What happens when saving a course? Existing lectures are deleted and the submitted curriculum is reinserted with sequential positions.
+
+**15. Question:** Why are queries parameterized?
+
+**What the interviewer is testing:** SQL injection awareness.
+
+**Answer:** Values are passed separately as `$1`, `$2`, and so on, so user input is not concatenated into SQL values.
+
+**Possible follow-up:** Is every dynamic SQL fragment parameterized? Values are parameterized; the course sort fragment is selected from a fixed allow-list.
+
+**16. Question:** What indexes exist?
+
+**What the interviewer is testing:** Query optimization basics.
+
+**Answer:** Courses have instructor/category indexes, orders have user/payment indexes, and reviews have a course plus descending created-at index.
+
+**Possible follow-up:** Which lookup benefits from the payment index? Finding an order by Razorpay payment/order identifier.
+
+**17. Question:** What does `ON DELETE CASCADE` do here?
+
+**What the interviewer is testing:** Referential actions.
+
+**Answer:** Deleting a parent automatically removes dependent records where configured, such as a course deleting lectures, progress, reviews, certificates, and enrollment references.
+
+**Possible follow-up:** Which relationships use restriction? Course instructor and order user use `RESTRICT`.
+
+**18. Question:** Why use JSON aggregation in the course query?
+
+**What the interviewer is testing:** SQL-to-API mapping.
+
+**Answer:** Subqueries use `json_agg` and `json_build_object` to return lectures and course students as nested arrays in one course result.
+
+**Possible follow-up:** What is the tradeoff? It reduces application-side assembly but can make large queries more expensive.
+
+### Authentication
+
+**19. Question:** How are passwords stored?
+
+**What the interviewer is testing:** Credential security.
+
+**Answer:** The registration controller hashes them with bcryptjs using cost 10; the database receives the hash, not the plain password.
+
+**Possible follow-up:** How does login validate it? `bcrypt.compare` compares the submitted password with the stored hash.
+
+**20. Question:** What is inside the JWT?
+
+**What the interviewer is testing:** Token design.
+
+**Answer:** `_id`, `userName`, `userEmail`, and `role`, signed with `JWT_SECRET`, and expiring after 120 minutes.
+
+**Possible follow-up:** Is the token stored in an HTTP-only cookie? No, the client stores it in sessionStorage and sends it as a bearer token.
+
+**21. Question:** What happens with an expired token?
+
+**What the interviewer is testing:** JWT lifecycle.
+
+**Answer:** `jwt.verify` throws, middleware returns 401, and the frontend check-auth path treats the user as unauthenticated.
+
+**Possible follow-up:** Is there refresh-token support? Not confirmed from the current implementation.
+
+**22. Question:** Where is role checking done?
+
+**What the interviewer is testing:** Client/server security distinction.
+
+**Answer:** Role redirects are implemented in `RouteGuard`; consistent server-side role checks are not implemented on many instructor endpoints.
+
+**Possible follow-up:** How would you improve it? Add authenticated middleware and explicit role/ownership checks in every instructor and student-sensitive controller.
+
+### Razorpay and Transactions
+
+**23. Question:** Why verify a Razorpay signature?
+
+**What the interviewer is testing:** Payment integrity.
+
+**Answer:** It proves the payment response corresponds to the server-created order and was signed with the Razorpay secret, rather than trusting browser input.
+
+**Possible follow-up:** What algorithm is used? HMAC-SHA256 over `razorpay_order_id|razorpay_payment_id`.
+
+**24. Question:** What records are created after payment confirmation?
+
+**What the interviewer is testing:** Domain flow understanding.
+
+**Answer:** The order becomes paid/confirmed, an enrollment is inserted, and a `course_students` record is inserted.
+
+**Possible follow-up:** Why two access records? Enrollment supports the student's purchased-course lookup; course_students supports course student data.
+
+**25. Question:** What happens if enrollment insertion fails?
+
+**What the interviewer is testing:** Atomicity.
+
+**Answer:** The transaction catch block rolls back the order update and any earlier insert in that transaction, then the error propagates.
+
+**Possible follow-up:** Is the whole payment externally rolled back? No; database rollback cannot undo a payment already accepted by Razorpay, so reconciliation/retry design would be important.
+
+**26. Question:** Does the server recalculate the paid amount?
+
+**What the interviewer is testing:** Trust boundaries.
+
+**Answer:** Not in the inspected flow. The create-order endpoint accepts client-supplied amount/course data, which is a significant security and integrity limitation.
+
+**Possible follow-up:** What should it do? Load the course and authenticated user on the server and derive the amount from trusted database data.
+
+### Cloudinary
+
+**27. Question:** Why use Cloudinary?
+
+**What the interviewer is testing:** Media architecture.
+
+**Answer:** It stores course images and lecture media outside the application server and returns URLs/public IDs that the LMS stores in PostgreSQL.
+
+**Possible follow-up:** Where is the public ID stored? In `lectures.public_id` for lecture media; course images use the course image field.
+
+**28. Question:** What is a current upload limitation?
+
+**What the interviewer is testing:** Operational security.
+
+**Answer:** Authentication, ownership authorization, strict file validation, and cleanup of temporary Multer files are not consistently confirmed in the current media routes.
+
+### API Design and Business Rules
+
+**29. Question:** How does the API know a user owns a review?
+
+**What the interviewer is testing:** Authorization in SQL.
+
+**Answer:** Update and delete queries require both the review ID and `req.user._id`; a different user cannot match the row.
+
+**Possible follow-up:** Does create prevent duplicates? The database unique constraint does.
+
+**30. Question:** How does a paid course become accessible?
+
+**What the interviewer is testing:** Enrollment logic.
+
+**Answer:** Successful verified payment inserts `enrollments`; paid progress access checks for that user/course enrollment.
+
+**Possible follow-up:** How are free courses different? Progress access treats zero pricing as accessible, but no matching enrollment insert is confirmed.
+
+**31. Question:** What does the course API return for curriculum?
+
+**What the interviewer is testing:** SQL mapping.
+
+**Answer:** It builds a JSON array of non-legacy lectures, ordered by `position`, with IDs, titles, video URLs, public IDs, and preview flags.
+
+**Possible follow-up:** Is `is_published` filtered? The repository's course listing does not visibly add an `is_published` filter.
+
+### Debugging and Deployment
+
+**32. Question:** How would you debug a failed database connection?
+
+**What the interviewer is testing:** Practical diagnosis.
+
+**Answer:** Check `DATABASE_URL`, SSL/network access, server logs, and `/health`; the connection test logs whether `SELECT NOW()` succeeds.
+
+**Possible follow-up:** What does Neon change? It provides the hosted endpoint, but the driver still connects using PostgreSQL protocol.
+
+**33. Question:** How would you debug a 401?
+
+**What the interviewer is testing:** Request tracing.
+
+**Answer:** Check sessionStorage, Axios's Authorization header, token expiry/signature, and the server JWT secret. The middleware returns 401 for missing/invalid tokens.
+
+**Possible follow-up:** Why might the frontend look logged in? React state can remain stale even when the server rejects the token.
+
+**34. Question:** How would you diagnose a certificate failure?
+
+**What the interviewer is testing:** Cross-layer reasoning.
+
+**Answer:** Verify enrollment, completed course_progress, Puppeteer/Chromium availability, and PDF response headers/errors.
+
+**Possible follow-up:** Is certificate generation asynchronous background work? No; the endpoint generates it during the request.
+
+**35. Question:** How would you scale the API?
+
+**What the interviewer is testing:** Design maturity.
+
+**Answer:** Keep API instances stateless, use the PostgreSQL pool carefully, add stronger indexes/query plans, move PDF/media processing to jobs where needed, and use Cloudinary/CDN for media. Exact production topology is Not confirmed.
+
+**Possible follow-up:** What must remain consistent? Payment confirmation, enrollment, and access state.
+
+**36. Question:** What scripts are available?
+
+**What the interviewer is testing:** Project operation.
+
+**Answer:** Server start/dev, schema, migration, and verification scripts; client dev, build, lint, and preview scripts. The server test command is a placeholder.
+
+**Possible follow-up:** How would you add confidence? Add controller/repository tests plus integration tests against a test PostgreSQL database and mocked Razorpay/Cloudinary.
+
+**37. Question:** Why is Mongoose still installed?
+
+**What the interviewer is testing:** Migration awareness.
+
+**Answer:** The migration and verification scripts use MongoDB/Mongoose, while the active repository uses PostgreSQL. It is legacy migration support, not proof that the active API uses MongoDB.
+
+**Possible follow-up:** Would you remove it immediately? Only after confirming migration scripts are no longer needed.
+
+**38. Question:** What happens if a course is deleted?
+
+**What the interviewer is testing:** Referential integrity.
+
+**Answer:** The schema specifies cascade behavior for lectures, enrollment references, student membership, progress, reviews, and certificates; orders set their nullable course ID to null.
+
+**Possible follow-up:** Does the application expose course deletion? Not confirmed from the inspected route list.
+
+**39. Question:** Why are title and instructor fields copied into enrollment/order rows?
+
+**What the interviewer is testing:** Snapshot versus normalization.
+
+**Answer:** They preserve historical/display values at purchase time, but updates to the source course/user can make snapshots stale.
+
+**Possible follow-up:** What is the alternative? Query current values through joins or maintain an explicit historical snapshot policy.
+
+**40. Question:** What is a key security improvement before production?
+
+**What the interviewer is testing:** Prioritization.
+
+**Answer:** Add server-side authentication, role and ownership checks to every sensitive route, remove insecure JWT fallback, derive payment data from trusted records, validate inputs, and reduce sensitive logging.
+
+**Possible follow-up:** Which issue is most urgent? Unauthenticated mutation/payment/access endpoints because a client can bypass UI restrictions.
+
+## 26. Deep-Dive Interview Answers
+
+### Why PostgreSQL and not MongoDB?
+
+Because the active schema has explicit relationships, composite uniqueness, foreign keys, ordered lectures, enrollment integrity, and multi-row transactions. PostgreSQL makes these rules enforceable in the database.
+
+### Why not Prisma?
+
+The current code uses `pg` directly and centralizes SQL in one repository. Prisma is not present in the package files, so claiming it would be inaccurate. Direct SQL gives the current code explicit control over joins, JSON aggregation, conflict clauses, and transactions.
+
+### Why use `pg` directly?
+
+It matches the current implementation and keeps SQL visible. It also allows direct use of PostgreSQL features such as `ANY`, `json_agg`, `ON CONFLICT`, and transactional clients.
+
+### Where are transactions needed?
+
+They are needed where several writes form one business operation: saving course plus lectures, marking progress plus completion, resetting progress, and payment confirmation plus enrollment/student membership.
+
+### What if payment succeeds but enrollment insertion fails?
+
+The PostgreSQL transaction rolls back the order/access writes, but the external payment is not automatically reversed. The system would need a retry/reconciliation or refund strategy. That recovery workflow is Not confirmed from the current implementation.
+
+### How do foreign keys protect the database?
+
+They reject references to missing parent rows and apply configured delete actions. For example, a lecture must reference an existing course, and deleting a course cascades to its dependent lecture rows.
+
+### How does review restriction work?
+
+The controller requires authentication, checks course/access rules, and the database unique constraint permits only one review per course/user. Update/delete additionally include the authenticated user ID in the SQL predicate.
+
+### How is completion calculated?
+
+The repository counts non-legacy lectures and counts viewed lecture-progress rows for the user's course progress. Completion is true only when there is at least one lecture and every lecture is viewed.
+
+### What happens if a lecture is deleted?
+
+The lecture's child progress rows cascade-delete because `lecture_progress.lecture_id` references `lectures(id) ON DELETE CASCADE`. Course progress itself remains unless its course/user is deleted.
+
+### How would you prevent duplicate enrollment?
+
+The schema already has `UNIQUE (user_id, course_id)`, and confirmation uses `ON CONFLICT DO NOTHING`. A stronger API would also authenticate the user and validate the trusted course ID server-side.
+
+### How would you optimize a slow course query?
+
+Inspect `EXPLAIN ANALYZE`, verify filters use indexes, consider indexes for frequent filters and joins, avoid returning unnecessary student/media data, and paginate course lists. Exact production query plans are Not confirmed.
+
+### How would you test payment?
+
+Unit test signature generation and mismatch handling; mock Razorpay order creation; run an integration test against a test database to verify order/enrollment atomicity; test retries and duplicate confirmation.
+
+### How would you improve security?
+
+Require JWT middleware on all sensitive routes, enforce role/ownership server-side, eliminate fallback secrets, validate request schemas, derive amounts/user identity from trusted records, constrain uploads, limit logs, and add rate limiting and secure deployment configuration. These improvements are recommendations, not current features.
+
+## 27. Explain the Project in 60 Seconds
+
+This is a React and Express learning management system backed by PostgreSQL. Students can register and log in with bcrypt-hashed passwords and a JWT, browse courses, access free courses, or purchase paid courses using Razorpay. After payment signature verification, the server transactionally confirms the order and creates enrollment records. Students can watch lectures, and the repository tracks lecture progress and marks the course complete when every non-legacy lecture is viewed. Completed students can download a Puppeteer-generated certificate and leave reviews subject to access and ownership rules. Instructors can create courses, manage ordered lectures, and upload media to Cloudinary. The main limitation I would discuss honestly is that several sensitive routes still need server-side authentication and role/ownership checks.
+
+## 28. Two-Minute Explanation
+
+The frontend is a Vite React application using React Router. `App.jsx` owns the active authentication, student, and instructor state. Axios uses a configurable API base URL and automatically sends the JWT stored in sessionStorage. Route guards control browser navigation for students and instructors.
+
+The backend is an Express API. Routes connect requests to controllers, and the controllers use a PostgreSQL repository. The schema has separate tables for users, courses, lectures, enrollments, orders, progress, reviews, and certificates. Foreign keys and unique constraints enforce important relationships. The repository uses parameterized SQL, joins and JSON aggregation for course data, and PostgreSQL transactions for course saving, progress changes, and payment confirmation.
+
+For a paid course, the client asks the backend to create a pending order and Razorpay order. The client then submits Razorpay identifiers and a signature. The server verifies the HMAC signature, marks the order confirmed, and inserts enrollment and course-student records in one transaction. Progress is stored at course and lecture levels. When all non-legacy lectures are viewed, completion is stored and the certificate endpoint can generate a PDF. Cloudinary stores uploaded media, while Neon can host the PostgreSQL database.
+
+The most important production gap is that UI route protection is not equivalent to backend authorization. The current server needs stronger authentication, role checks, ownership checks, trusted payment amount derivation, and validation.
+
+## 29. Five-Minute Deep Explanation
+
+I would start with the data model because it explains most of the application. `users` stores identity, password hash, and role. `courses` belongs to an instructor. `lectures` belongs to a course and has a unique position. `enrollments` represents a student/course access relationship and prevents duplicate pairs. `orders` keeps payment state and references the user and optionally the course. `course_progress` is unique per user/course, and `lecture_progress` records each viewed lecture. Reviews and certificates also use course/user relationships and have unique constraints to prevent duplicates.
+
+The server uses `pg.Pool` and a repository instead of an ORM. This repository maps database snake_case to frontend-shaped objects and uses PostgreSQL features directly. Course queries use nested JSON aggregation for curriculum and students. The SQL is parameterized, and dynamic sorting is selected from a fixed allow-list. Transactions are used when several writes must succeed together.
+
+Authentication hashes passwords with bcryptjs and signs a JWT containing the user identity and role for 120 minutes. Axios reads the token from sessionStorage and adds a bearer header. The JWT middleware verifies the token and places its payload on `req.user`. The frontend RouteGuard handles role-based redirects, but I would distinguish this from server authorization: several route files do not attach the middleware, so direct callers can bypass those UI checks.
+
+The most important business transaction is payment. The client supplies order data, the backend creates a pending local order and a Razorpay order, and after payment the server verifies the signature. On success, one PostgreSQL transaction confirms the order and inserts enrollment and course-student records. This protects database consistency, although the current implementation still trusts too much client-supplied amount and identity data and has no confirmed recovery workflow for an external payment/database mismatch.
+
+Progress uses a parent course record and child lecture records. Marking a lecture viewed runs in a transaction and calculates completion by comparing all non-legacy lectures with viewed lecture progress. Certificate generation is requested after enrollment and completion checks, then the server stores certificate metadata and renders a PDF with Puppeteer. Reviews require authentication and paid-course enrollment, and database ownership/uniqueness rules reinforce the controller checks.
+
+For deployment, the client is built with Vite and the server is run by Node. Neon is simply the hosted PostgreSQL provider selected through `DATABASE_URL`; `pg` still speaks PostgreSQL. Cloudinary handles media, and Razorpay handles payments. Before calling the system production-ready, I would add server-side authorization everywhere, strict validation, secure mandatory secrets, better payment reconciliation, upload controls, and automated tests.
+
+## 30. What I Must Understand Before the Interview
+
+1. The complete SQL schema and every foreign key/delete action.
+2. Why `enrollments` and `course_students` are separate records.
+3. The repository's row mapping and `courseSelect` JSON aggregation.
+4. `pg.Pool`, parameterized queries, and dedicated transaction clients.
+5. The course save transaction that deletes/reinserts lectures.
+6. bcrypt registration/login behavior.
+7. JWT payload, 120-minute expiry, sessionStorage, and bearer header.
+8. The difference between React RouteGuard and server authorization.
+9. Razorpay order creation, amount times 100, and HMAC verification.
+10. Payment confirmation's order/enrollment/course_students transaction.
+11. The risk of trusting client-supplied payment/user/course fields.
+12. Free-course access versus enrollment-backed paid access.
+13. Course and lecture progress tables.
+14. The exact all-lectures completion calculation.
+15. Certificate eligibility and Puppeteer PDF generation.
+16. Review eligibility, unique constraint, and ownership predicates.
+17. Cloudinary URLs/public IDs and Multer upload flow.
+18. Active `App.jsx` state versus unused/unmounted contexts.
+19. Environment variables and the difference between code-used and legacy names.
+20. Current limitations, especially missing server auth and absent automated tests.
+
+## 31. Source-Confirmed Unknowns
+
+The following cannot be confidently established from the current implementation alone:
+
+- The exact production Neon project, database region, pool size, and deployment topology.
+- Successful live operation of Razorpay, Cloudinary, Puppeteer, or Neon credentials.
+- A complete current lint-error count and complete end-to-end test result.
+- A formal input-validation schema for every endpoint.
+- Refresh tokens, email verification, password reset, rate limiting, CSRF protection, or audit logging.
+- A payment webhook/reconciliation/refund workflow.
+- Automatic certificate creation at the instant progress becomes complete.
+- The full production hosting and CI/CD configuration.
+
+These should be described as unknowns in an interview rather than guessed.

@@ -48,7 +48,7 @@ function StudentCoursesPage({
           {studentBoughtCoursesList.map((course) => (
             <Card
               key={course.courseId || course.id}
-              className="flex flex-col overflow-hidden border-border/60 bg-card/80 transition-all duration-300 hover:border-indigo-500/30 hover:shadow-lg hover:shadow-indigo-500/10"
+              className="flex flex-col overflow-hidden border-border/60 bg-white transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/10"
             >
               <CardContent className="flex-grow p-0">
                 <div className="aspect-video overflow-hidden bg-muted">
@@ -68,12 +68,12 @@ function StudentCoursesPage({
               <CardFooter className="p-4 pt-0">
                 <Button
                   onClick={() =>
-                    navigate(`/course-progress/${course?.courseId}`)
+                    navigate(`/course/details/${course?.courseId}`)
                   }
                   className="lms-btn-primary w-full"
                 >
                   <Watch className="mr-2 h-4 w-4" />
-                  Start Watching
+                  View Course Details
                 </Button>
               </CardFooter>
             </Card>

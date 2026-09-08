@@ -65,10 +65,11 @@ function InstructorDashboardpage({
 
   return (
     <div className="lms-page-shell flex min-h-screen">
-      <aside className="sticky top-0 hidden h-screen w-64 border-r border-border/60 bg-card/50 backdrop-blur-sm md:block">
+      <aside className="sticky top-0 hidden h-screen w-64 border-r border-border/60 bg-white md:block">
         <div className="p-5">
-          <h2 className="text-xl font-extrabold tracking-tight mb-5">
-            Instructor View
+          <p className="lms-section-kicker mb-2">Workspace</p>
+          <h2 className="mb-5 text-xl font-extrabold tracking-tight text-[#1B302D]">
+            Instructor studio
           </h2>
           <nav>
             {menuItems.map((menuItem) => (
@@ -91,7 +92,8 @@ function InstructorDashboardpage({
       </aside>
       <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-bold tracking-tight mb-2">Dashboard</h1>
+          <p className="lms-section-kicker mb-2">Overview</p>
+          <h1 className="mb-2 text-3xl font-bold tracking-tight text-[#1B302D]">Dashboard</h1>
           <p className="text-muted-foreground mb-8">
             My Courses · Revenue Summary · Students Enrolled
           </p>

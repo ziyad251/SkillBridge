@@ -66,7 +66,7 @@ function StudentViewCourseDetailsPage({
             currentCourseDetailsId,
             auth.user._id
           );
-          setIsEnrolled(purchaseInfo?.success && purchaseInfo?.data?.isPurchased);
+          setIsEnrolled(purchaseInfo?.success && purchaseInfo?.data === true);
         }
       } else {
         setStudentViewCourseDetails(null);
@@ -107,6 +107,11 @@ function StudentViewCourseDetailsPage({
     }
 
     if (!studentViewCourseDetails) return;
+
+    if (isEnrolled) {
+      navigate(`/course-progress/${studentViewCourseDetails._id}`);
+      return;
+    }
 
     // FREE COURSE
     if (studentViewCourseDetails?.pricing === 0) {
@@ -242,10 +247,12 @@ function StudentViewCourseDetailsPage({
     studentViewCourseDetails?.curriculum?.findIndex(
       (item) => item.freePreview
     ) ?? -1;
+  const isFreeCourse = Number(studentViewCourseDetails?.pricing) === 0;
+  const canReview = Boolean(auth?.user?._id) && (isEnrolled || isFreeCourse);
 
   return (
     <div className="mx-auto max-w-7xl overflow-x-hidden p-4 lg:p-8">
-      <div className="rounded-t-xl bg-gradient-to-br from-[#121218] via-[#4F46E5]/20 to-[#7C3AED]/10 p-6 text-foreground md:p-8">
+      <div className="rounded-lg bg-[#1B302D] p-6 text-white shadow-lg shadow-[#176B5F]/10 md:p-8">
         <h1 className="text-3xl font-bold mb-4">
           {studentViewCourseDetails?.title}
         </h1>
@@ -325,7 +332,7 @@ function StudentViewCourseDetailsPage({
               <CardTitle>Student Reviews</CardTitle>
             </CardHeader>
             <CardContent>
-              {isEnrolled && (
+              {canReview && (
                 <div className="mb-8">
                   <ReviewForm
                     courseId={currentCourseDetailsId}
@@ -349,7 +356,7 @@ function StudentViewCourseDetailsPage({
 
         {/* SIDEBAR */}
         <aside className="w-full shrink-0 lg:w-[380px] xl:w-[400px]">
-          <Card className="sticky top-20 border-border/60 bg-card/80 shadow-lg shadow-indigo-500/5">
+          <Card className="sticky top-20 border-border/60 bg-white shadow-lg shadow-[#176B5F]/10">
             <CardContent className="p-6">
               <div className="aspect-video w-full overflow-hidden rounded-lg bg-black">
                 <VideoPlayer
@@ -365,7 +372,7 @@ function StudentViewCourseDetailsPage({
                 />
               </div>
 
-              <div className="my-4 text-3xl font-bold text-indigo-400">
+              <div className="my-4 text-3xl font-bold text-primary">
                 ${studentViewCourseDetails?.pricing}
               </div>
 
@@ -374,7 +381,13 @@ function StudentViewCourseDetailsPage({
                 className="lms-btn-primary w-full"
                 disabled={isProcessingPayment}
               >
-                {isProcessingPayment ? "Processing..." : "Pay Now"}
+                {isProcessingPayment
+                  ? "Processing..."
+                  : isEnrolled
+                    ? "Continue Learning"
+                    : isFreeCourse
+                      ? "Start Learning"
+                      : "Pay Now"}
               </Button>
             </CardContent>
           </Card>

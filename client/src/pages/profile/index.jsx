@@ -83,10 +83,10 @@ function ProfilePage({ auth, resetCredentials, purchasedCoursesCount = 0 }) {
 
   return (
     <div className="lms-page-shell">
-      <div className="border-b border-border/50 bg-gradient-to-r from-[#4F46E5]/10 via-transparent to-[#7C3AED]/10">
+      <div className="border-b border-border/50 bg-primary/8">
         <div className="mx-auto max-w-4xl px-4 py-10 lg:px-8">
           <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
-            <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#4F46E5] to-[#7C3AED] text-2xl font-bold text-white shadow-xl shadow-indigo-500/30">
+            <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-lg bg-[#176B5F] text-2xl font-bold text-white shadow-xl shadow-primary/20">
               {initials}
             </div>
             <div className="flex-1 text-center sm:text-left">
@@ -98,7 +98,7 @@ function ProfilePage({ auth, resetCredentials, purchasedCoursesCount = 0 }) {
                 {user?.userEmail}
               </p>
               <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-                <span className="inline-flex items-center gap-1 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-xs font-medium capitalize text-indigo-300">
+                <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium capitalize text-primary">
                   <Shield className="h-3 w-3" />
                   {user?.role}
                 </span>
@@ -117,7 +117,7 @@ function ProfilePage({ auth, resetCredentials, purchasedCoursesCount = 0 }) {
         <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="lms-stat-card">
             <div className="flex items-center gap-3">
-              <BookMarked className="h-8 w-8 text-indigo-400" />
+              <BookMarked className="h-8 w-8 text-primary" />
               <div>
                 <p className="text-2xl font-bold">{stats.purchased}</p>
                 <p className="text-sm text-muted-foreground">Courses Purchased</p>
@@ -149,7 +149,7 @@ function ProfilePage({ auth, resetCredentials, purchasedCoursesCount = 0 }) {
         <Card className="border-border/60 bg-card/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <User className="h-4 w-4 text-indigo-400" />
+              <User className="h-4 w-4 text-primary" />
               Account Details
             </CardTitle>
           </CardHeader>

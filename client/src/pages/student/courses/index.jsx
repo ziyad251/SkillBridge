@@ -13,7 +13,6 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { filterOptions, sortOptions } from "@/config";
 import {
-  checkCoursePurchaseInfoService,
   fetchStudentViewCourseListService,
 } from "@/services";
 import { ArrowUpDownIcon, Search } from "lucide-react";
@@ -86,18 +85,7 @@ function StudentViewCoursesPage({
   }
 
   async function handleCourseNavigate(getCurrentCourseId) {
-    const response = await checkCoursePurchaseInfoService(
-      getCurrentCourseId,
-      auth?.user?._id
-    );
-
-    if (response?.success) {
-      if (response?.data) {
-        navigate(`/course-progress/${getCurrentCourseId}`);
-      } else {
-        navigate(`/course/details/${getCurrentCourseId}`);
-      }
-    }
+    navigate(`/course/details/${getCurrentCourseId}`);
   }
 
   useEffect(() => {
@@ -124,22 +112,23 @@ function StudentViewCoursesPage({
   console.log(loadingState, "loadingState");
 
   return (
-    <div className="mx-auto max-w-7xl overflow-x-hidden p-4 lg:p-8">
+    <div className="lms-page-shell mx-auto max-w-7xl overflow-x-hidden px-4 py-8 lg:px-8 lg:py-12">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">All Courses</h1>
+        <p className="lms-section-kicker">The catalog</p>
+        <h1 className="lms-page-heading mt-2">Find your next skill</h1>
         <p className="mt-1 text-muted-foreground">
           Browse and filter courses to find your next skill.
         </p>
       </div>
       <div className="flex flex-col gap-6 lg:flex-row">
         <aside className="w-full shrink-0 space-y-4 lg:w-72">
-          <div className="rounded-xl border border-border/60 bg-card/50 backdrop-blur-sm">
+          <div className="rounded-lg border border-border/60 bg-white shadow-sm">
             {Object.keys(filterOptions).map((ketItem) => (
-              <div className="p-4 border-b last:border-b-0">
+              <div key={ketItem} className="border-b p-4 last:border-b-0">
                 <h3 className="font-bold mb-3">{ketItem.toUpperCase()}</h3>
                 <div className="grid gap-2 mt-2">
                   {filterOptions[ketItem].map((option) => (
-                    <Label className="flex font-medium items-center gap-3">
+                    <Label key={option.id} className="flex cursor-pointer items-center gap-3 font-medium">
                       <Checkbox
                         checked={
                           filters &&

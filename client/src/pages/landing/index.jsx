@@ -62,9 +62,9 @@ function LandingPage() {
       <PublicNavbar />
 
       <section className="relative mx-auto max-w-7xl overflow-hidden px-4 py-24 text-center lg:px-8 lg:py-32">
-        <div className="pointer-events-none absolute left-1/2 top-0 h-64 w-64 -translate-x-1/2 rounded-full bg-indigo-500/20 blur-3xl" />
+        <div className="pointer-events-none absolute left-1/2 top-0 h-64 w-64 -translate-x-1/2 rounded-full bg-[#F5B83D]/20 blur-3xl" />
 
-        <p className="relative mb-6 inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-4 py-1.5 text-sm text-indigo-300">
+        <p className="relative mb-6 inline-flex items-center gap-2 rounded-full border border-[#176B5F]/25 bg-[#176B5F]/10 px-4 py-1.5 text-sm text-[#176B5F]">
           <Sparkles className="h-4 w-4" />
           Professional learning platform
         </p>
@@ -87,7 +87,7 @@ function LandingPage() {
           <Button
             size="lg"
             variant="outline"
-            className="h-12 border-border/60 bg-white/5 px-8 backdrop-blur transition-all hover:border-indigo-500/40 hover:bg-white/10"
+            className="h-12 border-border/60 bg-white/70 px-8 backdrop-blur transition-all hover:border-primary/40 hover:bg-white"
             onClick={() => navigate("/auth")}
           >
             Login
@@ -116,8 +116,8 @@ function LandingPage() {
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((item) => (
               <div key={item.title} className="lms-glass-card p-6">
-                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-gradient-to-br from-[#4F46E5]/30 to-[#7C3AED]/30">
-                  <item.icon className="h-5 w-5 text-indigo-400" />
+                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-[#176B5F]/10">
+                  <item.icon className="h-5 w-5 text-[#176B5F]" />
                 </div>
                 <h3 className="text-lg font-semibold">{item.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
@@ -141,7 +141,7 @@ function LandingPage() {
                 key={item.step}
                 className="lms-glass-card p-6 text-center"
               >
-                <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-[#4F46E5] to-[#7C3AED] text-sm font-bold text-white shadow-lg shadow-indigo-500/30">
+                <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#E8755E] text-sm font-bold text-white shadow-lg shadow-[#E8755E]/25">
                   {item.step}
                 </span>
                 <h3 className="mt-4 font-semibold">{item.title}</h3>
@@ -152,8 +152,8 @@ function LandingPage() {
         </div>
       </section>
 
-      <section className="relative overflow-hidden border-t border-indigo-500/20 py-16">
-        <div className="absolute inset-0 bg-gradient-to-r from-[#4F46E5]/20 via-[#7C3AED]/15 to-[#06B6D4]/10" />
+      <section className="relative overflow-hidden border-t border-[#176B5F]/20 py-16">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#176B5F]/15 via-[#F5B83D]/15 to-[#E8755E]/15" />
         <div className="relative mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-4 md:flex-row lg:px-8">
           <div>
             <h2 className="text-2xl font-bold md:text-3xl">Start building your skills today</h2>
@@ -175,7 +175,7 @@ function LandingPage() {
       <footer className="border-t border-border/50 py-10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 text-sm text-muted-foreground md:flex-row lg:px-8">
           <div className="flex items-center gap-2">
-            <GraduationCap className="h-4 w-4 text-indigo-400" />
+            <GraduationCap className="h-4 w-4 text-[#176B5F]" />
             <span>LMS Platform © {new Date().getFullYear()}</span>
           </div>
           <p className="flex items-center gap-2 text-center md:text-right">

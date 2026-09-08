@@ -17,7 +17,7 @@ import {
   resetCourseProgressService,
   downloadCertificateService,
 } from "@/services";
-import { Check, ChevronLeft, ChevronRight, Play, X, Download } from "lucide-react";
+import { Check, ChevronLeft, Play, Download } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import Confetti from "react-confetti";
 import { useNavigate, useParams } from "react-router-dom";
@@ -159,12 +159,20 @@ function StudentViewCourseProgressPage({
   }, [showConfetti]);
 
   const curriculum = studentCurrentCourseProgress?.courseDetails?.curriculum || [];
+  const completedLectureCount = curriculum.filter((lecture) =>
+    studentCurrentCourseProgress?.progress?.some(
+      (progress) => progress.lectureId === lecture._id && progress.viewed
+    )
+  ).length;
+  const courseProgressPercent = curriculum.length
+    ? Math.round((completedLectureCount / curriculum.length) * 100)
+    : 0;
 
   return (
-    <div className="flex h-[100dvh] flex-col overflow-hidden bg-[#0a0a0f] text-foreground">
+    <div className="flex min-h-[100dvh] flex-col bg-[#090D0E] text-white">
       {showConfetti && <Confetti />}
 
-      <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-white/10 bg-[#121218]/95 px-3 backdrop-blur md:px-4">
+      <header className="sticky top-0 z-50 flex min-h-16 shrink-0 items-center justify-between gap-3 border-b border-white/10 bg-[#111819]/95 px-3 backdrop-blur md:px-6">
         <div className="flex min-w-0 flex-1 items-center gap-2 md:gap-4">
           <Button
             type="button"
@@ -176,41 +184,34 @@ function StudentViewCourseProgressPage({
             <ChevronLeft className="h-4 w-4 md:mr-1" />
             <span className="hidden sm:inline">My Courses</span>
           </Button>
-          <h1 className="truncate text-sm font-semibold md:text-base">
-            {studentCurrentCourseProgress?.courseDetails?.title}
-          </h1>
+          <div className="min-w-0">
+            <p className="hidden text-[10px] font-bold uppercase tracking-[0.2em] text-[#6ED0BE] sm:block">Now learning</p>
+            <h1 className="truncate text-sm font-semibold md:text-base">
+              {studentCurrentCourseProgress?.courseDetails?.title || "Course learning"}
+            </h1>
+          </div>
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => setIsSideBarOpen(!isSideBarOpen)}
-          className="shrink-0 border-white/10 bg-white/5"
-        >
-          <span className="mr-1 hidden sm:inline">
-            {isSideBarOpen ? "Hide" : "Show"}
-          </span>
-          {isSideBarOpen ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <ChevronLeft className="h-4 w-4" />
-          )}
-        </Button>
+        <div className="flex shrink-0 items-center gap-3">
+          <div className="hidden text-right sm:block">
+            <p className="text-xs text-white/55">Course progress</p>
+            <p className="text-sm font-semibold text-[#F5B83D]">{courseProgressPercent}% complete</p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setIsSideBarOpen(!isSideBarOpen)}
+            className="shrink-0 border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white lg:hidden"
+          >
+            {isSideBarOpen ? "Hide content" : "Course content"}
+          </Button>
+        </div>
       </header>
 
-      <div className="relative flex min-h-0 flex-1">
-        {isSideBarOpen && (
-          <button
-            type="button"
-            aria-label="Close sidebar"
-            className="fixed inset-0 top-14 z-30 bg-black/60 lg:hidden"
-            onClick={() => setIsSideBarOpen(false)}
-          />
-        )}
-
-        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-          <div className="relative w-full shrink-0 bg-black lg:min-h-0 lg:flex-1">
-            <div className="aspect-video w-full max-h-[45vh] lg:max-h-none lg:h-full lg:min-h-[280px] lg:max-h-[calc(100dvh-8rem)]">
+      <div className="mx-auto flex w-full max-w-[1600px] flex-1 flex-col lg:flex-row">
+        <main className="min-w-0 flex-1">
+          <div className="flex justify-center border-b border-white/10 bg-[#050707] p-3 md:p-6">
+            <div className="aspect-video w-full max-w-5xl overflow-hidden rounded-lg border border-white/10 bg-black shadow-2xl shadow-black/40">
               <VideoPlayer
                 key={currentLecture?._id || "no-lecture"}
                 width="100%"
@@ -220,55 +221,61 @@ function StudentViewCourseProgressPage({
               />
             </div>
           </div>
-          <div className="shrink-0 border-t border-white/10 bg-[#121218] px-4 py-4 md:px-6">
-            <h2 className="text-lg font-bold md:text-xl">
-              {currentLecture?.title || "Course Lecture"}
-            </h2>
+          <div className="border-b border-white/10 bg-[#111819] px-4 py-5 md:px-8">
+            <div className="mx-auto flex max-w-5xl items-start justify-between gap-4">
+              <div>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#E8755E]">Current lecture</p>
+                <h2 className="text-lg font-bold md:text-2xl">
+                  {currentLecture?.title || "Course Lecture"}
+                </h2>
+              </div>
+              <div className="hidden min-w-40 text-right sm:block">
+                <p className="text-xs text-white/55">{completedLectureCount} of {curriculum.length} lectures</p>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+                  <div className="h-full rounded-full bg-[#F5B83D] transition-all" style={{ width: `${courseProgressPercent}%` }} />
+                </div>
+              </div>
+            </div>
           </div>
         </main>
 
         <aside
           className={cn(
-            "z-40 flex w-full max-w-[min(100%,400px)] flex-col border-l border-white/10 bg-[#121218] transition-transform duration-300 ease-out",
-            "fixed bottom-0 right-0 top-14 lg:static lg:top-auto lg:w-[380px] lg:max-w-[400px] lg:shrink-0 xl:w-[400px]",
-            isSideBarOpen
-              ? "translate-x-0"
-              : "translate-x-full lg:hidden"
+            "w-full border-t border-white/10 bg-[#111819] lg:w-[380px] lg:shrink-0 lg:border-l lg:border-t-0 xl:w-[410px]",
+            isSideBarOpen ? "block" : "hidden lg:block"
           )}
         >
-          <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 lg:hidden">
-            <span className="text-sm font-medium">Course content</span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setIsSideBarOpen(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+          <div className="border-b border-white/10 px-5 py-5">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#6ED0BE]">Course content</p>
+            <div className="mt-2 flex items-end justify-between gap-3">
+              <h2 className="text-lg font-bold">Your learning path</h2>
+              <span className="text-sm font-semibold text-[#F5B83D]">{courseProgressPercent}%</span>
+            </div>
+            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
+              <div className="h-full rounded-full bg-[#F5B83D] transition-all" style={{ width: `${courseProgressPercent}%` }} />
+            </div>
           </div>
 
           <Tabs defaultValue="content" className="flex min-h-0 flex-1 flex-col">
             <TabsList className="grid h-12 w-full shrink-0 grid-cols-2 rounded-none border-b border-white/10 bg-transparent p-0">
               <TabsTrigger
                 value="content"
-                className="rounded-none data-[state=active]:bg-indigo-500/20 data-[state=active]:text-indigo-300"
+                className="rounded-none data-[state=active]:bg-primary/20 data-[state=active]:text-primary"
               >
                 Content
               </TabsTrigger>
               <TabsTrigger
                 value="overview"
-                className="rounded-none data-[state=active]:bg-indigo-500/20 data-[state=active]:text-indigo-300"
+                className="rounded-none data-[state=active]:bg-primary/20 data-[state=active]:text-primary"
               >
                 Overview
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="content" className="mt-0 min-h-0 flex-1 overflow-hidden">
-              <ScrollArea className="h-[calc(100dvh-10rem)] lg:h-[calc(100dvh-7rem)]">
+              <ScrollArea className="h-[min(60dvh,560px)] lg:h-[calc(100dvh-9rem)]">
                 <div className="space-y-1 p-3">
-                  {curriculum.map((item) => {
+                  {curriculum.map((item, index) => {
                     const isViewed = studentCurrentCourseProgress?.progress?.find(
                       (p) => p.lectureId === item._id
                     )?.viewed;
@@ -280,9 +287,9 @@ function StudentViewCourseProgressPage({
                         key={item._id}
                         onClick={() => handleSelectLecture(item)}
                         className={cn(
-                          "flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
+                          "flex w-full items-start gap-3 rounded-md border border-transparent px-3 py-3 text-left text-sm transition-colors",
                           isActive
-                            ? "bg-indigo-500/20 text-indigo-200"
+                            ? "border-[#176B5F]/50 bg-[#176B5F]/20 text-[#8BE2D0]"
                             : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
                         )}
                       >
@@ -291,7 +298,7 @@ function StudentViewCourseProgressPage({
                         ) : (
                           <Play className="mt-0.5 h-4 w-4 shrink-0" />
                         )}
-                        <span className="line-clamp-2 font-medium">{item?.title}</span>
+                        <span className="flex min-w-0 flex-1 gap-2 font-medium"><span className="text-xs text-white/40">{String(index + 1).padStart(2, "0")}</span><span className="line-clamp-2">{item?.title}</span></span>
                       </button>
                     );
                   })}
@@ -313,7 +320,7 @@ function StudentViewCourseProgressPage({
         </aside>
       </div>
 
-      <Dialog open={lockCourse}>
+      <Dialog open={lockCourse} onOpenChange={setLockCourse}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>You can&apos;t view this page</DialogTitle>
@@ -324,7 +331,10 @@ function StudentViewCourseProgressPage({
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showCourseCompleteDialog}>
+      <Dialog
+        open={showCourseCompleteDialog}
+        onOpenChange={setShowCourseCompleteDialog}
+      >
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>🎉 Congratulations!</DialogTitle>
