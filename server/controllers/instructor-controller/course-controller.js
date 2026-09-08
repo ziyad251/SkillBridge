@@ -1,4 +1,4 @@
-const Course = require("../../models/Course");
+const { getCourse, listCourses, saveCourse } = require("../../repositories/postgres-repository");
 
 const addNewCourse = async (req, res) => {
   try {
@@ -6,17 +6,15 @@ const addNewCourse = async (req, res) => {
     console.log("📦 [BACKEND] Request body:", JSON.stringify(req.body, null, 2));
 
     const courseData = req.body;
-    const newlyCreatedCourse = new Course(courseData);
-
     console.log("💾 [BACKEND] Attempting to save course...");
-    const saveCourse = await newlyCreatedCourse.save();
-    console.log("✅ [BACKEND] Course saved successfully:", saveCourse._id);
+    const savedCourse = await saveCourse(courseData);
+    console.log("✅ [BACKEND] Course saved successfully:", savedCourse._id);
 
-    if (saveCourse) {
+    if (savedCourse) {
       res.status(201).json({
         success: true,
         message: "Course saved successfully",
-        data: saveCourse,
+        data: savedCourse,
       });
     }
   } catch (e) {
@@ -32,9 +30,7 @@ const addNewCourse = async (req, res) => {
 const getAllCourses = async (req, res) => {
   try {
     const { instructorId } = req.query;
-    const filter = instructorId ? { instructorId: String(instructorId) } : {};
-
-    const coursesList = await Course.find(filter);
+    const coursesList = await listCourses({ instructorId });
 
     res.status(200).json({
       success: true,
@@ -52,7 +48,7 @@ const getAllCourses = async (req, res) => {
 const getCourseDetailsByID = async (req, res) => {
   try {
     const { id } = req.params;
-    const courseDetails = await Course.findById(id);
+    const courseDetails = await getCourse(id);
 
     if (!courseDetails) {
       return res.status(404).json({
@@ -84,11 +80,7 @@ const updateCourseByID = async (req, res) => {
     const updatedCourseData = req.body;
 
     console.log("💾 [BACKEND] Attempting to update course...");
-    const updatedCourse = await Course.findByIdAndUpdate(
-      id,
-      updatedCourseData,
-      { new: true }
-    );
+    const updatedCourse = await getCourse(id) && await saveCourse(updatedCourseData, id);
 
     if (!updatedCourse) {
       console.log("❌ [BACKEND] Course not found for ID:", id);
