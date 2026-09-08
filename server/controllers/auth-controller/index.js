@@ -1,6 +1,6 @@
-const User = require("../../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { findUserByEmail, findUserByNameOrEmail, createUser } = require("../../repositories/postgres-repository");
 
 const JWT_SECRET = process.env.JWT_SECRET || "JWT_SECRET";
 
@@ -8,9 +8,7 @@ const registerUser = async (req, res) => {
   try {
     const { userName, userEmail, password, role } = req.body;
 
-    const existingUser = await User.findOne({
-      $or: [{ userEmail }, { userName }],
-    });
+    const existingUser = await findUserByNameOrEmail(userName, userEmail);
 
     if (existingUser) {
       return res.status(400).json({
@@ -20,14 +18,7 @@ const registerUser = async (req, res) => {
     }
 
     const hashPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({
-      userName,
-      userEmail,
-      role,
-      password: hashPassword,
-    });
-
-    await newUser.save();
+    await createUser({ userName, userEmail, role, password: hashPassword });
 
     return res.status(201).json({
       success: true,
@@ -46,7 +37,7 @@ const loginUser = async (req, res) => {
   try {
     const { userEmail, password } = req.body;
 
-    const checkUser = await User.findOne({ userEmail });
+    const checkUser = await findUserByEmail(userEmail);
 
     if (!checkUser || !(await bcrypt.compare(password, checkUser.password))) {
       return res.status(401).json({
