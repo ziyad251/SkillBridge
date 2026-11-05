@@ -1,7 +1,8 @@
 import { Route, Routes } from "react-router-dom";
 import AuthPage from "./pages/auth";
 import RouteGuard from "./components/route-guard";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { AuthContext } from "./context/auth-context";
 import InstructorDashboardpage from "./pages/instructor";
 import StudentViewCommonLayout from "./components/student-view/common-layout";
 import StudentHomePage from "./pages/student/home";
@@ -49,11 +50,10 @@ function App() {
     }
   }
 
-  async function handleLoginUser(event) {
-    event.preventDefault();
-
+  // Single shared login flow (used by the sign-in form and the demo button).
+  const loginWithCredentials = useCallback(async (credentials) => {
     try {
-      const data = await loginService(signInFormData);
+      const data = await loginService(credentials);
 
       if (data?.success) {
         sessionStorage.setItem(
@@ -70,12 +70,25 @@ function App() {
           user: null,
         });
       }
+
+      return data;
     } catch (error) {
       console.error("Login failed:", error?.response?.data?.message || error.message);
       setAuth({
         authenticate: false,
         user: null,
       });
+      throw error;
+    }
+  }, []);
+
+  async function handleLoginUser(event) {
+    event.preventDefault();
+
+    try {
+      await loginWithCredentials(signInFormData);
+    } catch {
+      // already logged and auth reset inside loginWithCredentials
     }
   }
 
@@ -165,6 +178,11 @@ function App() {
     loadPurchasedCourses();
   }, [auth.authenticate, auth.user?._id, auth.user?.role]);
 
+  const authContextValue = useMemo(
+    () => ({ auth, loginWithCredentials }),
+    [auth, loginWithCredentials]
+  );
+
   if (authLoading) {
     return (
       <div className="lms-page-shell flex min-h-screen flex-col gap-4 p-8">
@@ -182,181 +200,183 @@ function App() {
   const guardProps = { authenticated: auth?.authenticate, user: auth?.user };
 
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
+    <AuthContext.Provider value={authContextValue}>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
 
-      <Route
-        path="/auth"
-        element={
-          <RouteGuard
-            element={
-              <AuthPage
-                signInFormData={signInFormData}
-                setSignInFormData={setSignInFormData}
-                signUpFormData={signUpFormData}
-                setSignUpFormData={setSignUpFormData}
-                handleRegisterUser={handleRegisterUser}
-                handleLoginUser={handleLoginUser}
-              />
-            }
-            {...guardProps}
-          />
-        }
-      />
+        <Route
+          path="/auth"
+          element={
+            <RouteGuard
+              element={
+                <AuthPage
+                  signInFormData={signInFormData}
+                  setSignInFormData={setSignInFormData}
+                  signUpFormData={signUpFormData}
+                  setSignUpFormData={setSignUpFormData}
+                  handleRegisterUser={handleRegisterUser}
+                  handleLoginUser={handleLoginUser}
+                />
+              }
+              {...guardProps}
+            />
+          }
+        />
 
-      <Route
-        element={
-          <RouteGuard
+        <Route
+          element={
+            <RouteGuard
+              element={
+                <StudentViewCommonLayout
+                  resetCredentials={resetCredentials}
+                  auth={auth}
+                />
+              }
+              {...guardProps}
+            />
+          }
+        >
+          <Route
+            path="/courses"
             element={
-              <StudentViewCommonLayout
-                resetCredentials={resetCredentials}
+              <StudentViewCoursesPage
+                studentViewCoursesList={studentViewCoursesList}
+                setStudentViewCoursesList={setStudentViewCoursesList}
+                loadingState={loadingState}
+                setLoadingState={setLoadingState}
                 auth={auth}
               />
             }
-            {...guardProps}
           />
-        }
-      >
-        <Route
-          path="/courses"
-          element={
-            <StudentViewCoursesPage
-              studentViewCoursesList={studentViewCoursesList}
-              setStudentViewCoursesList={setStudentViewCoursesList}
-              loadingState={loadingState}
-              setLoadingState={setLoadingState}
-              auth={auth}
-            />
-          }
-        />
-        <Route
-          path="/course/details/:id"
-          element={
-            <StudentViewCourseDetailsPage
-              studentViewCourseDetails={studentViewCourseDetails}
-              setStudentViewCourseDetails={setStudentViewCourseDetails}
-              currentCourseDetailsId={currentCourseDetailsId}
-              setCurrentCourseDetailsId={setCurrentCourseDetailsId}
-              loadingState={loadingState}
-              setLoadingState={setLoadingState}
-              auth={auth}
-            />
-          }
-        />
-        <Route
-          path="/home"
-          element={
-            <StudentHomePage
-              studentViewCoursesList={studentViewCoursesList}
-              setStudentViewCoursesList={setStudentViewCoursesList}
-              auth={auth}
-              studentBoughtCoursesList={studentBoughtCoursesList}
-            />
-          }
-        />
-        <Route
-          path="/student-courses"
-          element={
-            <StudentCoursesPage
-              auth={auth}
-              studentBoughtCoursesList={studentBoughtCoursesList}
-              setStudentBoughtCoursesList={setStudentBoughtCoursesList}
-            />
-          }
-        />
-        <Route
-          path="/course-progress/:id"
-          element={
-            <StudentViewCourseProgressPage
-              auth={auth}
-              studentCurrentCourseProgress={studentCurrentCourseProgress}
-              setStudentCurrentCourseProgress={setStudentCurrentCourseProgress}
-            />
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <ProfilePage
-              auth={auth}
-              resetCredentials={resetCredentials}
-              purchasedCoursesCount={studentBoughtCoursesList?.length || 0}
-            />
-          }
-        />
-      </Route>
-
-      <Route
-        path="/instructor"
-        element={
-          <RouteGuard
+          <Route
+            path="/course/details/:id"
             element={
-              <InstructorDashboardpage
+              <StudentViewCourseDetailsPage
+                studentViewCourseDetails={studentViewCourseDetails}
+                setStudentViewCourseDetails={setStudentViewCourseDetails}
+                currentCourseDetailsId={currentCourseDetailsId}
+                setCurrentCourseDetailsId={setCurrentCourseDetailsId}
+                loadingState={loadingState}
+                setLoadingState={setLoadingState}
+                auth={auth}
+              />
+            }
+          />
+          <Route
+            path="/home"
+            element={
+              <StudentHomePage
+                studentViewCoursesList={studentViewCoursesList}
+                setStudentViewCoursesList={setStudentViewCoursesList}
+                auth={auth}
+                studentBoughtCoursesList={studentBoughtCoursesList}
+              />
+            }
+          />
+          <Route
+            path="/student-courses"
+            element={
+              <StudentCoursesPage
+                auth={auth}
+                studentBoughtCoursesList={studentBoughtCoursesList}
+                setStudentBoughtCoursesList={setStudentBoughtCoursesList}
+              />
+            }
+          />
+          <Route
+            path="/course-progress/:id"
+            element={
+              <StudentViewCourseProgressPage
+                auth={auth}
+                studentCurrentCourseProgress={studentCurrentCourseProgress}
+                setStudentCurrentCourseProgress={setStudentCurrentCourseProgress}
+              />
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProfilePage
                 auth={auth}
                 resetCredentials={resetCredentials}
-                instructorCoursesList={instructorCoursesList}
-                setInstructorCoursesList={setInstructorCoursesList}
-                setCurrentEditedCourseId={setCurrentEditedCourseId}
-                setCourseLandingFormData={setCourseLandingFormData}
-                setCourseCurriculumFormData={setCourseCurriculumFormData}
+                purchasedCoursesCount={studentBoughtCoursesList?.length || 0}
               />
             }
-            {...guardProps}
           />
-        }
-      />
-      <Route
-        path="/instructor/create-new-course"
-        element={
-          <RouteGuard
-            element={
-              <AddNewCoursePage
-                auth={auth}
-                courseLandingFormData={courseLandingFormData}
-                courseCurriculumFormData={courseCurriculumFormData}
-                setCourseLandingFormData={setCourseLandingFormData}
-                setCourseCurriculumFormData={setCourseCurriculumFormData}
-                currentEditedCourseId={currentEditedCourseId}
-                setCurrentEditedCourseId={setCurrentEditedCourseId}
-                mediaUploadProgress={mediaUploadProgress}
-                setMediaUploadProgress={setMediaUploadProgress}
-                mediaUploadProgressPercentage={mediaUploadProgressPercentage}
-                setMediaUploadProgressPercentage={
-                  setMediaUploadProgressPercentage
-                }
-              />
-            }
-            {...guardProps}
-          />
-        }
-      />
-      <Route
-        path="/instructor/edit-course/:courseId"
-        element={
-          <RouteGuard
-            element={
-              <AddNewCoursePage
-                auth={auth}
-                courseLandingFormData={courseLandingFormData}
-                courseCurriculumFormData={courseCurriculumFormData}
-                setCourseLandingFormData={setCourseLandingFormData}
-                setCourseCurriculumFormData={setCourseCurriculumFormData}
-                currentEditedCourseId={currentEditedCourseId}
-                setCurrentEditedCourseId={setCurrentEditedCourseId}
-                mediaUploadProgress={mediaUploadProgress}
-                setMediaUploadProgress={setMediaUploadProgress}
-                mediaUploadProgressPercentage={mediaUploadProgressPercentage}
-                setMediaUploadProgressPercentage={
-                  setMediaUploadProgressPercentage
-                }
-              />
-            }
-            {...guardProps}
-          />
-        }
-      />
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+        </Route>
+
+        <Route
+          path="/instructor"
+          element={
+            <RouteGuard
+              element={
+                <InstructorDashboardpage
+                  auth={auth}
+                  resetCredentials={resetCredentials}
+                  instructorCoursesList={instructorCoursesList}
+                  setInstructorCoursesList={setInstructorCoursesList}
+                  setCurrentEditedCourseId={setCurrentEditedCourseId}
+                  setCourseLandingFormData={setCourseLandingFormData}
+                  setCourseCurriculumFormData={setCourseCurriculumFormData}
+                />
+              }
+              {...guardProps}
+            />
+          }
+        />
+        <Route
+          path="/instructor/create-new-course"
+          element={
+            <RouteGuard
+              element={
+                <AddNewCoursePage
+                  auth={auth}
+                  courseLandingFormData={courseLandingFormData}
+                  courseCurriculumFormData={courseCurriculumFormData}
+                  setCourseLandingFormData={setCourseLandingFormData}
+                  setCourseCurriculumFormData={setCourseCurriculumFormData}
+                  currentEditedCourseId={currentEditedCourseId}
+                  setCurrentEditedCourseId={setCurrentEditedCourseId}
+                  mediaUploadProgress={mediaUploadProgress}
+                  setMediaUploadProgress={setMediaUploadProgress}
+                  mediaUploadProgressPercentage={mediaUploadProgressPercentage}
+                  setMediaUploadProgressPercentage={
+                    setMediaUploadProgressPercentage
+                  }
+                />
+              }
+              {...guardProps}
+            />
+          }
+        />
+        <Route
+          path="/instructor/edit-course/:courseId"
+          element={
+            <RouteGuard
+              element={
+                <AddNewCoursePage
+                  auth={auth}
+                  courseLandingFormData={courseLandingFormData}
+                  courseCurriculumFormData={courseCurriculumFormData}
+                  setCourseLandingFormData={setCourseLandingFormData}
+                  setCourseCurriculumFormData={setCourseCurriculumFormData}
+                  currentEditedCourseId={currentEditedCourseId}
+                  setCurrentEditedCourseId={setCurrentEditedCourseId}
+                  mediaUploadProgress={mediaUploadProgress}
+                  setMediaUploadProgress={setMediaUploadProgress}
+                  mediaUploadProgressPercentage={mediaUploadProgressPercentage}
+                  setMediaUploadProgressPercentage={
+                    setMediaUploadProgressPercentage
+                  }
+                />
+              }
+              {...guardProps}
+            />
+          }
+        />
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </AuthContext.Provider>
   );
 }
 

@@ -138,3 +138,7 @@ body::-webkit-scrollbar-thumb {
 @media (max-width: 640px) {
   .lms-nav-link-active::after { @apply -bottom-2; }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
