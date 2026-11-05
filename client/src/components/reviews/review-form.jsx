@@ -49,8 +49,8 @@ export default function ReviewForm({ courseId, auth, onReviewSubmitted }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4 border rounded-lg">
-      <h3 className="text-lg font-semibold">Write Your Review</h3>
+    <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-[#E5E5E5] bg-white p-5 sm:p-6">
+      <h3 className="text-lg font-semibold text-[#171717]">Write your review</h3>
 
       <div>
         <label className="block text-sm font-medium mb-2">Rating</label>
@@ -76,12 +76,12 @@ export default function ReviewForm({ courseId, auth, onReviewSubmitted }) {
       </div>
 
       {error && <div className="text-sm text-red-500 bg-red-50 p-2 rounded">{error}</div>}
-      {success && <div className="text-sm text-neutral-800 bg-neutral-50 p-2 rounded">{success}</div>}
+      {success && <div className="text-sm rounded-lg border border-[#E5E5E5] bg-[#FAFAFA] p-2 text-neutral-800">{success}</div>}
 
       <Button
         type="submit"
         disabled={isSubmitting}
-        className="w-full lms-btn-primary"
+        className="lms-btn-primary h-10 w-full rounded-full shadow-none"
       >
         {isSubmitting ? "Submitting..." : "Submit Review"}
       </Button>

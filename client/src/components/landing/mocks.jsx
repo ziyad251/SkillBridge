@@ -291,7 +291,7 @@ export function ReviewsMock({ className }) {
             <Star
               className={cn(
                 "h-5 w-5 transition-colors",
-                i < filled ? "fill-amber-400 text-amber-400" : "text-slate-300"
+                i < filled ? "fill-[#0A0A0A] text-[#0A0A0A]" : "text-slate-300"
               )}
             />
           </motion.span>

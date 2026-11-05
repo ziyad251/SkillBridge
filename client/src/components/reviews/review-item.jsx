@@ -72,11 +72,11 @@ export default function ReviewItem({
 
   if (isEditing && isOwner) {
     return (
-      <div className="border rounded-lg p-4 space-y-3">
+      <div className="space-y-3 rounded-2xl border border-[#E5E5E5] bg-white p-5">
         <div className="flex justify-between items-start">
           <div>
-            <p className="font-semibold">{review.userName}</p>
-            <p className="text-sm text-gray-500">{createdAt}</p>
+            <p className="font-semibold text-[#171717]">{review.userName}</p>
+            <p className="text-sm text-neutral-500">{createdAt}</p>
           </div>
         </div>
 
@@ -108,7 +108,7 @@ export default function ReviewItem({
           <Button
             onClick={handleUpdate}
             disabled={isSubmitting}
-            className="lms-btn-primary flex-1"
+            className="lms-btn-primary flex-1 rounded-full shadow-none"
           >
             {isSubmitting ? "Saving..." : "Save"}
           </Button>
@@ -120,7 +120,7 @@ export default function ReviewItem({
               setError("");
             }}
             variant="outline"
-            className="flex-1"
+            className="flex-1 rounded-full"
             disabled={isSubmitting}
           >
             Cancel
@@ -131,13 +131,13 @@ export default function ReviewItem({
   }
 
   return (
-    <div className="border rounded-lg p-4">
+    <div className="rounded-2xl border border-[#E5E5E5] bg-white p-5">
       <div className="flex justify-between items-start mb-3">
         <div>
-          <p className="font-semibold">{review.userName}</p>
+          <p className="font-semibold text-[#171717]">{review.userName}</p>
           <div className="flex items-center gap-3 mt-1">
             <RatingStars rating={review.rating} interactive={false} size="sm" />
-            <p className="text-sm text-gray-500">{createdAt}</p>
+            <p className="text-sm text-neutral-500">{createdAt}</p>
           </div>
         </div>
 
@@ -164,7 +164,7 @@ export default function ReviewItem({
         )}
       </div>
 
-      <p className="text-sm text-gray-700">{review.review}</p>
+      <p className="text-sm text-neutral-700">{review.review}</p>
     </div>
   );
 }

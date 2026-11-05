@@ -1,67 +1,63 @@
 import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { courseCategories, courseLevelOptions } from "@/config";
+import { CourseThumbnail, Tag } from "@/components/student-view/ui";
 
-function CourseCard({ course, onClick, className, layout = "grid" }) {
-  const rating = course?.rating ?? 4.8;
+export function labelFor(options, id) {
+  if (!id) return null;
+  return options.find((option) => option.id === id)?.label || id;
+}
 
-  if (layout === "list") {
-    return (
-      <article
-        onClick={onClick}
-        className={cn(
-          "group flex cursor-pointer gap-4 overflow-hidden rounded-lg border border-border/60 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10",
-          className
-        )}
-      >
-        <div className="h-28 w-40 shrink-0 overflow-hidden rounded-lg sm:h-32 sm:w-48">
-          <img
-            src={course?.image}
-            alt={course?.title}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h3 className="line-clamp-2 text-lg font-semibold tracking-tight group-hover:text-primary">
-            {course?.title}
-          </h3>
-          <p className="mt-1 text-sm text-muted-foreground">{course?.instructorName}</p>
-          <div className="mt-2 flex items-center gap-2 text-sm text-amber-400/90">
-            <Star className="h-3.5 w-3.5 fill-current" />
-            <span>{rating}</span>
-          </div>
-          <p className="mt-2 text-lg font-bold text-primary">${course?.pricing}</p>
-        </div>
-      </article>
-    );
+function CourseCard({ course, onClick, className }) {
+  // Only show a rating when the course data actually carries one.
+  const rating = Number(course?.rating);
+  const hasRating = Number.isFinite(rating) && rating > 0;
+  const level = labelFor(courseLevelOptions, course?.level);
+  const category = labelFor(courseCategories, course?.category);
+
+  function handleKeyDown(event) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onClick?.();
+    }
   }
 
   return (
     <article
+      role="link"
+      tabIndex={0}
+      aria-label={course?.title}
       onClick={onClick}
+      onKeyDown={handleKeyDown}
       className={cn(
-        "group cursor-pointer overflow-hidden rounded-lg border border-border/60 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/10",
+        "group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-[#E5E5E5] bg-white transition-all duration-200 hover:-translate-y-0.5 hover:border-neutral-400 focus-visible:ring-2 focus-visible:ring-[#0A0A0A] focus-visible:ring-offset-2",
         className
       )}
     >
-      <div className="relative aspect-[16/10] overflow-hidden bg-muted">
-        <img
-          src={course?.image}
-          alt={course?.title}
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-      </div>
-      <div className="p-4">
-        <h3 className="line-clamp-2 font-semibold tracking-tight group-hover:text-primary">
+      <CourseThumbnail src={course?.image} title={course?.title} className="border-b border-[#E5E5E5]" />
+      <div className="flex flex-1 flex-col p-4">
+        <h3 className="line-clamp-2 min-h-[2.75rem] text-[15px] font-semibold leading-snug tracking-tight text-[#171717]">
           {course?.title}
         </h3>
-        <p className="mt-1 text-sm text-muted-foreground">{course?.instructorName || "Independent instructor"}</p>
-        <div className="mt-2 flex items-center justify-between">
-          <div className="flex items-center gap-1 text-sm text-amber-400/90">
-            <Star className="h-3.5 w-3.5 fill-current" />
-            <span>{rating}</span>
+        <p className="mt-1 truncate text-sm text-neutral-500">
+          {course?.instructorName || "Independent instructor"}
+        </p>
+        {level || category ? (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {level ? <Tag>{level}</Tag> : null}
+            {category ? <Tag className="max-w-full truncate">{category}</Tag> : null}
           </div>
-          <p className="font-bold text-primary">${course?.pricing}</p>
+        ) : null}
+        <div className="mt-auto flex items-center justify-between gap-3 pt-4">
+          {hasRating ? (
+            <span className="flex items-center gap-1 text-sm font-medium text-[#171717]">
+              <Star className="h-3.5 w-3.5 fill-current" aria-hidden="true" />
+              {rating.toFixed(1)}
+            </span>
+          ) : (
+            <span />
+          )}
+          <p className="font-bold text-[#0A0A0A]">${course?.pricing}</p>
         </div>
       </div>
     </article>

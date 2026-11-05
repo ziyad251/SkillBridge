@@ -1,5 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CourseThumbnail, FadeIn, PageContainer, Panel, Tag, btnPrimary, btnSecondary } from "@/components/student-view/ui";
+import { labelFor } from "@/components/ui/course-card";
+import { courseCategories, courseLevelOptions, languageOptions } from "@/config";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogClose,
@@ -19,7 +22,20 @@ import {
   getReviewsByCourseService,
   checkCoursePurchaseInfoService,
 } from "@/services";
-import { CheckCircle, Globe, Lock, PlayCircle } from "lucide-react";
+import {
+  Award,
+  BarChart3,
+  CalendarDays,
+  Check,
+  ChevronLeft,
+  Globe,
+  ListVideo,
+  Lock,
+  PlayCircle,
+  TrendingUp,
+  UserRound,
+  Users,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
@@ -223,176 +239,261 @@ function StudentViewCourseDetailsPage({
     }
   }, [location.pathname]);
 
+
   if (loadingState) {
     return (
-      <div className="mx-auto max-w-7xl space-y-4 p-4 lg:p-8">
-        <Skeleton className="h-48 w-full rounded-xl" />
-        <Skeleton className="h-64 w-full rounded-xl" />
+      <div className="lms-page-shell">
+        <PageContainer className="grid gap-8 pt-10 lg:grid-cols-[minmax(0,1fr)_380px]">
+          <div className="space-y-4">
+            <Skeleton className="h-6 w-40 bg-neutral-100" />
+            <Skeleton className="h-10 w-3/4 bg-neutral-100" />
+            <Skeleton className="h-48 w-full rounded-2xl bg-neutral-100" />
+          </div>
+          <Skeleton className="h-96 w-full rounded-2xl bg-neutral-100" />
+        </PageContainer>
       </div>
     );
   }
 
   if (!studentViewCourseDetails) {
     return (
-      <div className="p-8 text-center">
-        <h1 className="text-2xl font-bold">Course Not Found</h1>
-        <p className="mt-2 text-muted-foreground">
-          This course may have been removed or is unavailable.
-        </p>
+      <div className="lms-page-shell">
+        <PageContainer className="pt-16">
+          <Panel className="mx-auto flex max-w-lg flex-col items-center px-6 py-14 text-center">
+            <h1 className="text-2xl font-bold tracking-tight text-[#171717]">Course not found</h1>
+            <p className="mt-2 text-sm text-neutral-600">
+              This course may have been removed or is unavailable.
+            </p>
+            <Button className={cn(btnPrimary, "mt-6 h-10")} onClick={() => navigate("/courses")}>
+              Browse courses
+            </Button>
+          </Panel>
+        </PageContainer>
       </div>
     );
   }
 
-  const freePreviewIndex =
-    studentViewCourseDetails?.curriculum?.findIndex(
-      (item) => item.freePreview
-    ) ?? -1;
-  const isFreeCourse = Number(studentViewCourseDetails?.pricing) === 0;
+  const course = studentViewCourseDetails;
+  const curriculum = course?.curriculum || [];
+  const freePreviewIndex = curriculum.findIndex((item) => item.freePreview);
+  const isFreeCourse = Number(course?.pricing) === 0;
   const canReview = Boolean(auth?.user?._id) && (isEnrolled || isFreeCourse);
+  const objectives = (course?.objectives || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+  const createdOn = course?.date ? new Date(course.date) : null;
+  const createdLabel =
+    createdOn && !Number.isNaN(createdOn.getTime())
+      ? createdOn.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
+      : null;
+  const level = labelFor(courseLevelOptions, course?.level);
+  const category = labelFor(courseCategories, course?.category);
+  const language = labelFor(languageOptions, course?.primaryLanguage);
+  const studentCount = course?.students?.length || 0;
+  const ctaLabel = isProcessingPayment
+    ? "Processing..."
+    : isEnrolled
+      ? "Continue learning"
+      : isFreeCourse
+        ? "Start learning"
+        : "Enroll now";
 
   return (
-    <div className="mx-auto max-w-7xl overflow-x-hidden p-4 lg:p-8">
-      <div className="rounded-lg bg-[#171717] p-6 text-white shadow-lg shadow-[#0A0A0A]/10 md:p-8">
-        <h1 className="text-3xl font-bold mb-4">
-          {studentViewCourseDetails?.title}
-        </h1>
-        <p className="text-xl mb-4">
-          {studentViewCourseDetails?.subtitle}
-        </p>
+    <div className="lms-page-shell pb-20">
+      <PageContainer className="pt-8 sm:pt-10">
+        <button
+          type="button"
+          onClick={() => navigate("/courses")}
+          className="inline-flex items-center gap-1 text-sm font-medium text-neutral-500 transition-colors hover:text-[#0A0A0A]"
+        >
+          <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+          All courses
+        </button>
 
-        <div className="flex flex-wrap gap-4 text-sm">
-          <span>Created By {studentViewCourseDetails?.instructorName}</span>
-          <span>
-            Created On{" "}
-            {studentViewCourseDetails?.date
-              ? studentViewCourseDetails.date.split("T")[0]
-              : ""}
-          </span>
-          <span className="flex items-center">
-            <Globe className="mr-1 h-4 w-4" />
-            {studentViewCourseDetails?.primaryLanguage}
-          </span>
-          <span>
-            {studentViewCourseDetails?.students?.length || 0} Students
-          </span>
-        </div>
-      </div>
-
-      <div className="mt-8 flex flex-col gap-8 lg:flex-row">
-        <main className="min-w-0 flex-1">
-          <Card className="mb-8 border-border/60 bg-card/80">
-            <CardHeader>
-              <CardTitle>What you'll learn</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {(studentViewCourseDetails?.objectives || "")
-                  .split(",")
-                  .map((objective, index) => (
-                    <li key={index} className="flex items-start">
-                      <CheckCircle className="mr-2 h-5 w-5 text-neutral-800" />
-                      <span>{objective}</span>
-                    </li>
-                  ))}
-              </ul>
-            </CardContent>
-          </Card>
-
-          {/* CURRICULUM */}
-          <Card className="border-border/60 bg-card/80">
-            <CardHeader>
-              <CardTitle>Course Curriculum</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {studentViewCourseDetails?.curriculum?.map((item, index) => (
-                <div
-                  key={index}
-                  className={`flex items-center gap-2 mb-3 ${
-                    item.freePreview ? "cursor-pointer" : "cursor-not-allowed"
-                  }`}
-                  onClick={() =>
-                    item.freePreview &&
-                    handleSetFreePreview(item.videoUrl)
-                  }
-                >
-                  {item.freePreview ? (
-                    <PlayCircle className="h-4 w-4" />
-                  ) : (
-                    <Lock className="h-4 w-4" />
-                  )}
-                  <span>{item.title}</span>
+        <div className="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-12">
+          {/* LEFT COLUMN */}
+          <main className="min-w-0">
+            <FadeIn>
+              {category || level ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {category ? <Tag>{category}</Tag> : null}
+                  {level ? <Tag>{level}</Tag> : null}
                 </div>
-              ))}
-            </CardContent>
-          </Card>
+              ) : null}
+              <h1 className="mt-4 text-3xl font-bold leading-tight tracking-tight text-[#171717] sm:text-4xl">
+                {course?.title}
+              </h1>
+              {course?.subtitle ? (
+                <p className="mt-3 text-lg text-neutral-600">{course.subtitle}</p>
+              ) : null}
+              <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-neutral-600">
+                {course?.instructorName ? (
+                  <li className="flex items-center gap-1.5">
+                    <UserRound className="h-4 w-4 text-neutral-400" aria-hidden="true" />
+                    {course.instructorName}
+                  </li>
+                ) : null}
+                {language ? (
+                  <li className="flex items-center gap-1.5">
+                    <Globe className="h-4 w-4 text-neutral-400" aria-hidden="true" />
+                    {language}
+                  </li>
+                ) : null}
+                <li className="flex items-center gap-1.5">
+                  <Users className="h-4 w-4 text-neutral-400" aria-hidden="true" />
+                  {studentCount} {studentCount === 1 ? "student" : "students"}
+                </li>
+                {createdLabel ? (
+                  <li className="flex items-center gap-1.5">
+                    <CalendarDays className="h-4 w-4 text-neutral-400" aria-hidden="true" />
+                    Created {createdLabel}
+                  </li>
+                ) : null}
+              </ul>
+            </FadeIn>
 
-          {/* REVIEWS SECTION */}
-          <Card className="mt-8 border-border/60 bg-card/80">
-            <CardHeader>
-              <CardTitle>Student Reviews</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {canReview && (
-                <div className="mb-8">
+            {course?.description ? (
+              <section aria-labelledby="about-title" className="mt-10">
+                <h2 id="about-title" className="text-xl font-bold tracking-tight text-[#171717]">About this course</h2>
+                <p className="mt-3 whitespace-pre-line leading-relaxed text-neutral-600">{course.description}</p>
+              </section>
+            ) : null}
+
+            {objectives.length > 0 ? (
+              <section aria-labelledby="learn-title" className="mt-10">
+                <Panel className="p-6">
+                  <h2 id="learn-title" className="text-xl font-bold tracking-tight text-[#171717]">What you&apos;ll learn</h2>
+                  <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+                    {objectives.map((objective, index) => (
+                      <li key={index} className="flex items-start gap-2.5 text-sm text-neutral-700">
+                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#0A0A0A]" aria-hidden="true" />
+                        <span>{objective}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </Panel>
+              </section>
+            ) : null}
+
+            {/* CURRICULUM */}
+            <section aria-labelledby="curriculum-title" className="mt-10">
+              <div className="flex items-end justify-between gap-3">
+                <h2 id="curriculum-title" className="text-xl font-bold tracking-tight text-[#171717]">Curriculum</h2>
+                <p className="text-sm text-neutral-500">
+                  {curriculum.length} {curriculum.length === 1 ? "lecture" : "lectures"}
+                </p>
+              </div>
+              <Panel as="ol" className="mt-4 divide-y divide-[#E5E5E5] overflow-hidden">
+                {curriculum.map((item, index) => (
+                  <li key={item?._id || index}>
+                    {item.freePreview ? (
+                      <button
+                        type="button"
+                        onClick={() => handleSetFreePreview(item.videoUrl)}
+                        className="flex w-full items-center gap-4 px-4 py-3.5 text-left transition-colors hover:bg-neutral-50 sm:px-5"
+                      >
+                        <span className="w-6 shrink-0 text-xs tabular-nums text-neutral-400">{String(index + 1).padStart(2, "0")}</span>
+                        <span className="min-w-0 flex-1 text-sm font-medium text-[#171717]">{item.title}</span>
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[#0A0A0A] px-2.5 py-0.5 text-xs font-semibold text-[#0A0A0A]">
+                          <PlayCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                          Preview
+                        </span>
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-4 px-4 py-3.5 sm:px-5">
+                        <span className="w-6 shrink-0 text-xs tabular-nums text-neutral-400">{String(index + 1).padStart(2, "0")}</span>
+                        <span className="min-w-0 flex-1 text-sm text-neutral-600">{item.title}</span>
+                        {isEnrolled ? null : <Lock className="h-4 w-4 shrink-0 text-neutral-400" aria-label="Locked" />}
+                      </div>
+                    )}
+                  </li>
+                ))}
+                {curriculum.length === 0 ? (
+                  <li className="px-5 py-6 text-sm text-neutral-500">No lectures have been added yet.</li>
+                ) : null}
+              </Panel>
+            </section>
+
+            {/* REVIEWS */}
+            <section aria-labelledby="reviews-title" className="mt-10">
+              <h2 id="reviews-title" className="text-xl font-bold tracking-tight text-[#171717]">Student reviews</h2>
+              <div className="mt-4 space-y-6">
+                {canReview && (
                   <ReviewForm
                     courseId={currentCourseDetailsId}
                     auth={auth}
                     onReviewSubmitted={() => fetchReviews(currentCourseDetailsId)}
                   />
-                </div>
-              )}
+                )}
 
-              <ReviewList
-                reviews={reviews}
-                averageRating={averageRating}
-                totalReviews={totalReviews}
-                currentUserId={auth?.user?._id}
-                onReviewUpdated={() => fetchReviews(currentCourseDetailsId)}
-                onReviewDeleted={() => fetchReviews(currentCourseDetailsId)}
-              />
-            </CardContent>
-          </Card>
-        </main>
-
-        {/* SIDEBAR */}
-        <aside className="w-full shrink-0 lg:w-[380px] xl:w-[400px]">
-          <Card className="sticky top-20 border-border/60 bg-white shadow-lg shadow-[#0A0A0A]/10">
-            <CardContent className="p-6">
-              <div className="aspect-video w-full overflow-hidden rounded-lg bg-black">
-                <VideoPlayer
-                  url={
-                    freePreviewIndex !== -1
-                      ? studentViewCourseDetails?.curriculum[
-                          freePreviewIndex
-                        ]?.videoUrl
-                      : ""
-                  }
-                  width="100%"
-                  height="100%"
+                <ReviewList
+                  reviews={reviews}
+                  averageRating={averageRating}
+                  totalReviews={totalReviews}
+                  currentUserId={auth?.user?._id}
+                  onReviewUpdated={() => fetchReviews(currentCourseDetailsId)}
+                  onReviewDeleted={() => fetchReviews(currentCourseDetailsId)}
                 />
               </div>
+            </section>
+          </main>
 
-              <div className="my-4 text-3xl font-bold text-primary">
-                ${studentViewCourseDetails?.pricing}
-              </div>
+          {/* RIGHT COLUMN — purchase card */}
+          <aside className="order-first min-w-0 lg:order-none">
+            <FadeIn delay={0.05} className="lg:sticky lg:top-24">
+              <Panel className="overflow-hidden">
+                {freePreviewIndex !== -1 ? (
+                  <div className="aspect-video w-full overflow-hidden border-b border-[#E5E5E5] bg-black">
+                    <VideoPlayer
+                      url={curriculum[freePreviewIndex]?.videoUrl}
+                      width="100%"
+                      height="100%"
+                    />
+                  </div>
+                ) : (
+                  <CourseThumbnail src={course?.image} title={course?.title} className="border-b border-[#E5E5E5]" />
+                )}
+                <div className="p-6">
+                  <div className="text-3xl font-bold text-[#0A0A0A]">${course?.pricing}</div>
 
-              <Button
-                onClick={handleCreatePayment}
-                className="lms-btn-primary w-full"
-                disabled={isProcessingPayment}
-              >
-                {isProcessingPayment
-                  ? "Processing..."
-                  : isEnrolled
-                    ? "Continue Learning"
-                    : isFreeCourse
-                      ? "Start Learning"
-                      : "Pay Now"}
-              </Button>
-            </CardContent>
-          </Card>
-        </aside>
-      </div>
+                  <Button
+                    onClick={handleCreatePayment}
+                    className={cn(btnPrimary, "mt-4 h-11 w-full text-base")}
+                    disabled={isProcessingPayment}
+                  >
+                    {ctaLabel}
+                  </Button>
+                  {!isEnrolled && !isFreeCourse ? (
+                    <p className="mt-2 text-center text-xs text-neutral-500">Secure checkout with Razorpay (test mode)</p>
+                  ) : null}
+
+                  <ul className="mt-6 space-y-2.5 border-t border-[#E5E5E5] pt-5 text-sm text-neutral-700">
+                    <li className="flex items-center gap-2.5">
+                      <ListVideo className="h-4 w-4 text-neutral-400" aria-hidden="true" />
+                      {curriculum.length} video {curriculum.length === 1 ? "lecture" : "lectures"}
+                    </li>
+                    {level ? (
+                      <li className="flex items-center gap-2.5">
+                        <BarChart3 className="h-4 w-4 text-neutral-400" aria-hidden="true" />
+                        {level} level
+                      </li>
+                    ) : null}
+                    <li className="flex items-center gap-2.5">
+                      <TrendingUp className="h-4 w-4 text-neutral-400" aria-hidden="true" />
+                      Progress tracked per lecture
+                    </li>
+                    <li className="flex items-center gap-2.5">
+                      <Award className="h-4 w-4 text-neutral-400" aria-hidden="true" />
+                      Includes a certificate of completion
+                    </li>
+                  </ul>
+                </div>
+              </Panel>
+            </FadeIn>
+          </aside>
+        </div>
+      </PageContainer>
 
       {/* FREE PREVIEW DIALOG */}
       <Dialog
@@ -402,12 +503,12 @@ function StudentViewCourseDetailsPage({
           setDisplayCurrentVideoFreePreview(null);
         }}
       >
-        <DialogContent>
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-3xl rounded-2xl">
           <DialogHeader>
-            <DialogTitle>Course Preview</DialogTitle>
+            <DialogTitle>Course preview</DialogTitle>
           </DialogHeader>
 
-          <div className="aspect-video w-full overflow-hidden rounded-lg bg-black">
+          <div className="aspect-video w-full overflow-hidden rounded-xl bg-black">
             <VideoPlayer
               url={displayCurrentVideoFreePreview}
               width="100%"
@@ -417,7 +518,7 @@ function StudentViewCourseDetailsPage({
 
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="secondary">Close</Button>
+              <Button variant="outline" className={btnSecondary}>Close</Button>
             </DialogClose>
           </DialogFooter>
         </DialogContent>

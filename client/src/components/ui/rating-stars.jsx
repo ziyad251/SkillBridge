@@ -6,6 +6,7 @@ export default function RatingStars({
   onRatingChange,
   interactive = true,
   size = "md",
+  showLabel = true,
 }) {
   const [hoverRating, setHoverRating] = useState(0);
 
@@ -36,15 +37,15 @@ export default function RatingStars({
           <Star
             className={`${sizeMap[size]} ${
               star <= displayRating
-                ? "fill-yellow-400 text-yellow-400"
-                : "text-gray-400"
+                ? "fill-[#0A0A0A] text-[#0A0A0A]"
+                : "text-neutral-300"
             }`}
           />
         </button>
       ))}
-      <span className="ml-2 text-sm font-medium text-gray-400">
+      {showLabel ? (<span className="ml-2 text-sm font-medium text-neutral-500">
         {rating > 0 ? `${rating}.0` : "No rating"}
-      </span>
+      </span>) : null}
     </div>
   );
 }

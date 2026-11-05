@@ -6,7 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+import { btnPrimary, btnSecondary, Kicker, Panel, ProgressBar } from "@/components/student-view/ui";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import VideoPlayer from "@/components/video-player";
@@ -17,7 +17,7 @@ import {
   resetCourseProgressService,
   downloadCertificateService,
 } from "@/services";
-import { Check, ChevronLeft, Play, Download } from "lucide-react";
+import { Award, BadgeCheck, Check, ChevronLeft, ChevronRight, Download, Play, RotateCcw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import Confetti from "react-confetti";
 import { useNavigate, useParams } from "react-router-dom";
@@ -52,6 +52,7 @@ function StudentViewCourseProgressPage({
         setStudentCurrentCourseProgress({
           courseDetails: response?.data?.courseDetails,
           progress: response?.data?.progress,
+          completed: Boolean(response?.data?.completed),
         });
 
         if (response?.data?.completed) {
@@ -167,51 +168,63 @@ function StudentViewCourseProgressPage({
   const courseProgressPercent = curriculum.length
     ? Math.round((completedLectureCount / curriculum.length) * 100)
     : 0;
+  const isCourseComplete =
+    Boolean(studentCurrentCourseProgress?.completed) ||
+    (curriculum.length > 0 && completedLectureCount === curriculum.length);
+  const currentIndex = curriculum.findIndex((item) => item._id === currentLecture?._id);
+  const previousLecture = currentIndex > 0 ? curriculum[currentIndex - 1] : null;
+  const nextLecture =
+    currentIndex !== -1 && currentIndex < curriculum.length - 1 ? curriculum[currentIndex + 1] : null;
+  const remainingLectures = Math.max(0, curriculum.length - completedLectureCount);
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-[#0A0A0A] text-white">
-      {showConfetti && <Confetti />}
+    <div className="flex min-h-[100dvh] flex-col bg-[#FAFAFA] text-[#171717]">
+      {showConfetti && <Confetti colors={["#0A0A0A", "#404040", "#737373", "#A3A3A3", "#D4D4D4"]} />}
 
-      <header className="sticky top-0 z-50 flex min-h-16 shrink-0 items-center justify-between gap-3 border-b border-white/10 bg-[#171717]/95 px-3 backdrop-blur md:px-6">
+      <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center justify-between gap-3 border-b border-[#E5E5E5] bg-white/90 px-3 backdrop-blur-xl md:px-6">
         <div className="flex min-w-0 flex-1 items-center gap-2 md:gap-4">
           <Button
             type="button"
             onClick={() => navigate("/student-courses")}
             variant="ghost"
             size="sm"
-            className="shrink-0 text-muted-foreground hover:text-foreground"
+            className="shrink-0 rounded-full text-neutral-600 hover:bg-[#0A0A0A]/5 hover:text-[#0A0A0A]"
           >
-            <ChevronLeft className="h-4 w-4 md:mr-1" />
-            <span className="hidden sm:inline">My Courses</span>
+            <ChevronLeft className="h-4 w-4 md:mr-1" aria-hidden="true" />
+            <span className="hidden sm:inline">My courses</span>
+            <span className="sr-only sm:hidden">Back to my courses</span>
           </Button>
-          <div className="min-w-0">
-            <p className="hidden text-[10px] font-bold uppercase tracking-[0.2em] text-[#D4D4D4] sm:block">Now learning</p>
-            <h1 className="truncate text-sm font-semibold md:text-base">
-              {studentCurrentCourseProgress?.courseDetails?.title || "Course learning"}
-            </h1>
-          </div>
+          <span className="hidden h-6 w-px bg-[#E5E5E5] sm:block" aria-hidden="true" />
+          <h1 className="min-w-0 truncate text-sm font-semibold md:text-base">
+            {studentCurrentCourseProgress?.courseDetails?.title || "Course"}
+          </h1>
         </div>
         <div className="flex shrink-0 items-center gap-3">
-          <div className="hidden text-right sm:block">
-            <p className="text-xs text-white/55">Course progress</p>
-            <p className="text-sm font-semibold text-white">{courseProgressPercent}% complete</p>
+          <div className="hidden w-40 sm:block">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-neutral-500">Progress</span>
+              <span className="font-semibold tabular-nums">{courseProgressPercent}%</span>
+            </div>
+            <ProgressBar value={courseProgressPercent} className="mt-1.5" label="Course progress" />
           </div>
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={() => setIsSideBarOpen(!isSideBarOpen)}
-            className="shrink-0 border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white lg:hidden"
+            aria-expanded={isSideBarOpen}
+            aria-controls="course-content"
+            className={cn(btnSecondary, "h-8 px-3 lg:hidden")}
           >
-            {isSideBarOpen ? "Hide content" : "Course content"}
+            {isSideBarOpen ? "Hide content" : "Content"}
           </Button>
         </div>
       </header>
 
       <div className="mx-auto flex w-full max-w-[1600px] flex-1 flex-col lg:flex-row">
-        <main className="min-w-0 flex-1">
-          <div className="flex justify-center border-b border-white/10 bg-[#050505] p-3 md:p-6">
-            <div className="aspect-video w-full max-w-5xl overflow-hidden rounded-lg border border-white/10 bg-black shadow-2xl shadow-black/40">
+        <main className="min-w-0 flex-1 px-3 py-4 md:px-6 md:py-6 lg:px-8">
+          <div className="mx-auto max-w-5xl">
+            <div className="aspect-video w-full overflow-hidden rounded-2xl bg-black">
               <VideoPlayer
                 key={currentLecture?._id || "no-lecture"}
                 width="100%"
@@ -220,61 +233,127 @@ function StudentViewCourseProgressPage({
                 onProgressUpdate={handleVideoComplete}
               />
             </div>
-          </div>
-          <div className="border-b border-white/10 bg-[#171717] px-4 py-5 md:px-8">
-            <div className="mx-auto flex max-w-5xl items-start justify-between gap-4">
-              <div>
-                <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-neutral-400">Current lecture</p>
-                <h2 className="text-lg font-bold md:text-2xl">
-                  {currentLecture?.title || "Course Lecture"}
+
+            <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                {currentIndex !== -1 ? (
+                  <Kicker>
+                    Lecture {currentIndex + 1} of {curriculum.length}
+                  </Kicker>
+                ) : null}
+                <h2 className="mt-1.5 text-xl font-bold tracking-tight md:text-2xl">
+                  {currentLecture?.title || "Select a lecture"}
                 </h2>
               </div>
-              <div className="hidden min-w-40 text-right sm:block">
-                <p className="text-xs text-white/55">{completedLectureCount} of {curriculum.length} lectures</p>
-                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
-                  <div className="h-full rounded-full bg-white transition-all" style={{ width: `${courseProgressPercent}%` }} />
-                </div>
+              <div className="flex shrink-0 gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={cn(btnSecondary, "h-10 flex-1 sm:flex-none")}
+                  disabled={!previousLecture}
+                  onClick={() => previousLecture && handleSelectLecture(previousLecture)}
+                >
+                  <ChevronLeft className="mr-1 h-4 w-4" aria-hidden="true" />
+                  Previous
+                </Button>
+                <Button
+                  type="button"
+                  className={cn(btnPrimary, "h-10 flex-1 sm:flex-none")}
+                  disabled={!nextLecture}
+                  onClick={() => nextLecture && handleSelectLecture(nextLecture)}
+                >
+                  Next
+                  <ChevronRight className="ml-1 h-4 w-4" aria-hidden="true" />
+                </Button>
               </div>
             </div>
+
+            {/* Certificate */}
+            <section aria-labelledby="certificate-title" className="mt-8">
+              {isCourseComplete ? (
+                <Panel className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:p-6">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#E5E5E5] bg-[#FAFAFA]">
+                    <BadgeCheck className="h-6 w-6 text-[#0A0A0A]" aria-hidden="true" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <h3 id="certificate-title" className="font-semibold">Certificate ready</h3>
+                    <p className="mt-0.5 text-sm text-neutral-600">
+                      You&apos;ve completed all {curriculum.length} lectures. Download your PDF certificate.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    onClick={handleDownloadCertificate}
+                    disabled={isDownloadingCertificate}
+                    className={cn(btnPrimary, "h-10")}
+                  >
+                    <Download className="mr-2 h-4 w-4" aria-hidden="true" />
+                    {isDownloadingCertificate ? "Downloading..." : "Download PDF"}
+                  </Button>
+                </Panel>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-5 sm:p-6">
+                  <div className="flex items-start gap-4">
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#E5E5E5] bg-[#FAFAFA]">
+                      <Award className="h-6 w-6 text-neutral-400" aria-hidden="true" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <h3 id="certificate-title" className="font-semibold">Certificate of completion</h3>
+                      <p className="mt-0.5 text-sm text-neutral-600">
+                        {curriculum.length > 0
+                          ? `Finish ${remainingLectures} more ${remainingLectures === 1 ? "lecture" : "lectures"} to unlock your PDF certificate.`
+                          : "Complete every lecture to unlock your PDF certificate."}
+                      </p>
+                      <div className="mt-3 flex items-center gap-3">
+                        <ProgressBar value={courseProgressPercent} className="flex-1" label="Progress towards certificate" />
+                        <span className="text-xs font-semibold tabular-nums">
+                          {completedLectureCount}/{curriculum.length}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </section>
           </div>
         </main>
 
         <aside
+          id="course-content"
           className={cn(
-            "w-full border-t border-white/10 bg-[#171717] lg:w-[380px] lg:shrink-0 lg:border-l lg:border-t-0 xl:w-[410px]",
-            isSideBarOpen ? "block" : "hidden lg:block"
+            "w-full border-t border-[#E5E5E5] bg-white lg:sticky lg:top-16 lg:h-[calc(100dvh-4rem)] lg:w-[380px] lg:shrink-0 lg:border-l lg:border-t-0 xl:w-[400px]",
+            isSideBarOpen ? "flex flex-col" : "hidden lg:flex lg:flex-col"
           )}
         >
-          <div className="border-b border-white/10 px-5 py-5">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#D4D4D4]">Course content</p>
-            <div className="mt-2 flex items-end justify-between gap-3">
-              <h2 className="text-lg font-bold">Your learning path</h2>
-              <span className="text-sm font-semibold text-white">{courseProgressPercent}%</span>
+          <div className="border-b border-[#E5E5E5] px-5 py-5">
+            <div className="flex items-end justify-between gap-3">
+              <h2 className="text-lg font-bold tracking-tight">Course content</h2>
+              <span className="text-sm text-neutral-500">
+                {completedLectureCount} of {curriculum.length} done
+              </span>
             </div>
-            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
-              <div className="h-full rounded-full bg-white transition-all" style={{ width: `${courseProgressPercent}%` }} />
-            </div>
+            <ProgressBar value={courseProgressPercent} className="mt-3" label="Course progress" />
           </div>
 
           <Tabs defaultValue="content" className="flex min-h-0 flex-1 flex-col">
-            <TabsList className="grid h-12 w-full shrink-0 grid-cols-2 rounded-none border-b border-white/10 bg-transparent p-0">
+            <TabsList className="grid h-11 w-full shrink-0 grid-cols-2 rounded-none border-b border-[#E5E5E5] bg-transparent p-0">
               <TabsTrigger
                 value="content"
-                className="rounded-none data-[state=active]:bg-primary/20 data-[state=active]:text-primary"
+                className="h-full rounded-none border-b-2 border-transparent text-neutral-500 shadow-none data-[state=active]:border-[#0A0A0A] data-[state=active]:bg-transparent data-[state=active]:text-[#0A0A0A] data-[state=active]:shadow-none"
               >
-                Content
+                Lectures
               </TabsTrigger>
               <TabsTrigger
                 value="overview"
-                className="rounded-none data-[state=active]:bg-primary/20 data-[state=active]:text-primary"
+                className="h-full rounded-none border-b-2 border-transparent text-neutral-500 shadow-none data-[state=active]:border-[#0A0A0A] data-[state=active]:bg-transparent data-[state=active]:text-[#0A0A0A] data-[state=active]:shadow-none"
               >
                 Overview
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="content" className="mt-0 min-h-0 flex-1 overflow-hidden">
-              <ScrollArea className="h-[min(60dvh,560px)] lg:h-[calc(100dvh-9rem)]">
-                <div className="space-y-1 p-3">
+              <ScrollArea className="h-[min(60dvh,560px)] lg:h-full">
+                <ol className="space-y-1 p-3">
                   {curriculum.map((item, index) => {
                     const isViewed = studentCurrentCourseProgress?.progress?.find(
                       (p) => p.lectureId === item._id
@@ -282,36 +361,51 @@ function StudentViewCourseProgressPage({
                     const isActive = currentLecture?._id === item._id;
 
                     return (
-                      <button
-                        type="button"
-                        key={item._id}
-                        onClick={() => handleSelectLecture(item)}
-                        className={cn(
-                          "flex w-full items-start gap-3 rounded-md border border-transparent px-3 py-3 text-left text-sm transition-colors",
-                          isActive
-                            ? "border-white/30 bg-white/10 text-[#E5E5E5]"
-                            : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
-                        )}
-                      >
-                        {isViewed ? (
-                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-neutral-300" />
-                        ) : (
-                          <Play className="mt-0.5 h-4 w-4 shrink-0" />
-                        )}
-                        <span className="flex min-w-0 flex-1 gap-2 font-medium"><span className="text-xs text-white/40">{String(index + 1).padStart(2, "0")}</span><span className="line-clamp-2">{item?.title}</span></span>
-                      </button>
+                      <li key={item._id}>
+                        <button
+                          type="button"
+                          onClick={() => handleSelectLecture(item)}
+                          aria-current={isActive ? "true" : undefined}
+                          className={cn(
+                            "flex w-full items-start gap-3 rounded-xl border px-3 py-3 text-left text-sm transition-colors",
+                            isActive
+                              ? "border-[#E5E5E5] bg-[#F5F5F5] text-[#0A0A0A]"
+                              : "border-transparent text-neutral-600 hover:bg-neutral-50 hover:text-[#0A0A0A]"
+                          )}
+                        >
+                          {isViewed ? (
+                            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#0A0A0A]">
+                              <Check className="h-3 w-3 text-white" strokeWidth={3} aria-hidden="true" />
+                              <span className="sr-only">Completed:</span>
+                            </span>
+                          ) : (
+                            <span
+                              className={cn(
+                                "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border",
+                                isActive ? "border-[#0A0A0A]" : "border-neutral-300"
+                              )}
+                            >
+                              {isActive ? <Play className="h-2.5 w-2.5 fill-[#0A0A0A] text-[#0A0A0A]" aria-hidden="true" /> : null}
+                            </span>
+                          )}
+                          <span className="flex min-w-0 flex-1 gap-2">
+                            <span className="pt-px text-xs tabular-nums text-neutral-400">{String(index + 1).padStart(2, "0")}</span>
+                            <span className={cn("line-clamp-2", isActive && "font-semibold")}>{item?.title}</span>
+                          </span>
+                        </button>
+                      </li>
                     );
                   })}
-                </div>
+                </ol>
               </ScrollArea>
             </TabsContent>
 
             <TabsContent value="overview" className="mt-0 min-h-0 flex-1 overflow-hidden">
-              <ScrollArea className="h-[calc(100dvh-10rem)] lg:h-[calc(100dvh-7rem)]">
-                <div className="p-4">
-                  <h2 className="mb-3 text-lg font-bold">About this course</h2>
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    {studentCurrentCourseProgress?.courseDetails?.description}
+              <ScrollArea className="h-[min(60dvh,560px)] lg:h-full">
+                <div className="p-5">
+                  <h3 className="mb-2 font-semibold">About this course</h3>
+                  <p className="whitespace-pre-line text-sm leading-relaxed text-neutral-600">
+                    {studentCurrentCourseProgress?.courseDetails?.description || "No description provided."}
                   </p>
                 </div>
               </ScrollArea>
@@ -321,13 +415,16 @@ function StudentViewCourseProgressPage({
       </div>
 
       <Dialog open={lockCourse} onOpenChange={setLockCourse}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="w-[calc(100vw-2rem)] rounded-2xl sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>You can&apos;t view this page</DialogTitle>
+            <DialogTitle>You don&apos;t have access to this course</DialogTitle>
             <DialogDescription>
-              Please purchase this course to get access
+              Enroll in this course to start watching its lectures.
             </DialogDescription>
           </DialogHeader>
+          <Button className={cn(btnPrimary, "h-10")} onClick={() => navigate(`/course/details/${id}`)}>
+            View course
+          </Button>
         </DialogContent>
       </Dialog>
 
@@ -335,35 +432,35 @@ function StudentViewCourseProgressPage({
         open={showCourseCompleteDialog}
         onOpenChange={setShowCourseCompleteDialog}
       >
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="w-[calc(100vw-2rem)] rounded-2xl sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>🎉 Congratulations!</DialogTitle>
-            <DialogDescription className="flex flex-col gap-4 mt-4">
-              <div>
-                <Label className="text-base">You have successfully completed this course</Label>
-                <div className="mt-3 p-3 bg-neutral-100 rounded">
-                  <p className="text-sm font-medium text-neutral-800">Progress: 100%</p>
-                </div>
-              </div>
-              <div className="flex flex-col gap-2">
-                <Button
-                  type="button"
-                  onClick={handleDownloadCertificate}
-                  disabled={isDownloadingCertificate}
-                  className="lms-btn-primary w-full"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  {isDownloadingCertificate ? "Downloading..." : "🎓 Download Certificate"}
-                </Button>
-                <Button type="button" onClick={() => navigate("/student-courses")}>
-                  My Courses Page
-                </Button>
-                <Button type="button" onClick={handleRewatchCourse}>
-                  Rewatch Course
-                </Button>
-              </div>
+            <span className="mb-2 flex h-12 w-12 items-center justify-center rounded-full border border-[#E5E5E5] bg-[#FAFAFA]">
+              <BadgeCheck className="h-6 w-6 text-[#0A0A0A]" aria-hidden="true" />
+            </span>
+            <DialogTitle>Course complete</DialogTitle>
+            <DialogDescription>
+              You&apos;ve finished every lecture in this course. Your certificate is ready to download.
             </DialogDescription>
           </DialogHeader>
+          <ProgressBar value={100} label="Course progress" />
+          <div className="mt-2 flex flex-col gap-2">
+            <Button
+              type="button"
+              onClick={handleDownloadCertificate}
+              disabled={isDownloadingCertificate}
+              className={cn(btnPrimary, "h-10 w-full")}
+            >
+              <Download className="mr-2 h-4 w-4" aria-hidden="true" />
+              {isDownloadingCertificate ? "Downloading..." : "Download certificate"}
+            </Button>
+            <Button type="button" variant="outline" className={cn(btnSecondary, "h-10 w-full")} onClick={() => navigate("/student-courses")}>
+              Back to my courses
+            </Button>
+            <Button type="button" variant="ghost" className="h-10 w-full rounded-full" onClick={handleRewatchCourse}>
+              <RotateCcw className="mr-2 h-4 w-4" aria-hidden="true" />
+              Rewatch course
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

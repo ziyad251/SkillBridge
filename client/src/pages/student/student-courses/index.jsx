@@ -1,9 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import EmptyState from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
+import PurchasedCourseCard from "@/components/student-view/purchased-course-card";
+import { btnPrimary, FadeIn, Kicker, PageContainer, Panel } from "@/components/student-view/ui";
+import { cn } from "@/lib/utils";
 import { fetchStudentBoughtCoursesService } from "@/services";
-import { BookOpen, Watch } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -17,80 +18,75 @@ function StudentCoursesPage({
 
   async function fetchStudentBoughtCourses() {
     setLoading(true);
-    const response = await fetchStudentBoughtCoursesService(auth?.user?._id);
-    if (response?.success) {
-      setStudentBoughtCoursesList(response?.data);
+    try {
+      const response = await fetchStudentBoughtCoursesService(auth?.user?._id);
+      if (response?.success) {
+        setStudentBoughtCoursesList(response?.data);
+      }
+    } catch (error) {
+      console.error("Failed to load purchased courses:", error?.response?.data?.message || error.message);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   useEffect(() => {
     fetchStudentBoughtCourses();
   }, []);
 
-  return (
-    <div className="lms-page-shell mx-auto max-w-7xl overflow-x-hidden p-4 lg:p-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">My Courses</h1>
-        <p className="mt-1 text-muted-foreground">
-          Your purchased courses — continue learning anytime.
-        </p>
-      </div>
+  const count = studentBoughtCoursesList?.length || 0;
 
-      {loading ? (
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-3 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-72 rounded-xl" />
-          ))}
-        </div>
-      ) : studentBoughtCoursesList?.length > 0 ? (
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {studentBoughtCoursesList.map((course) => (
-            <Card
-              key={course.courseId || course.id}
-              className="flex flex-col overflow-hidden border-border/60 bg-white transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/10"
-            >
-              <CardContent className="flex-grow p-0">
-                <div className="aspect-video overflow-hidden bg-muted">
-                  <img
-                    src={course?.courseImage}
-                    alt={course?.title}
-                    className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
-                  />
-                </div>
-                <div className="p-4">
-                  <h3 className="line-clamp-2 font-bold">{course?.title}</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {course?.instructorName}
-                  </p>
-                </div>
-              </CardContent>
-              <CardFooter className="p-4 pt-0">
-                <Button
-                  onClick={() =>
-                    navigate(`/course/details/${course?.courseId}`)
-                  }
-                  className="lms-btn-primary w-full"
-                >
-                  <Watch className="mr-2 h-4 w-4" />
-                  View Course Details
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <EmptyState
-          icon={BookOpen}
-          title="No purchases yet"
-          description="Browse the marketplace and enroll in your first course."
-          action={
-            <Button className="lms-btn-primary" onClick={() => navigate("/courses")}>
-              Explore Courses
+  return (
+    <div className="lms-page-shell pb-20">
+      <PageContainer className="pt-10 sm:pt-12">
+        <FadeIn className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <Kicker>Your library</Kicker>
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-[#171717] sm:text-4xl">My courses</h1>
+            <p className="mt-2 text-neutral-600">
+              {count > 0
+                ? `${count} ${count === 1 ? "course" : "courses"} enrolled. Resume any of them where you left off.`
+                : "Courses you enroll in will show up here."}
+            </p>
+          </div>
+          {count > 0 ? (
+            <Button className={cn(btnPrimary, "h-10 self-start sm:self-auto")} onClick={() => navigate("/courses")}>
+              Browse courses
             </Button>
-          }
-        />
-      )}
+          ) : null}
+        </FadeIn>
+
+        <div className="mt-8">
+          {loading && count === 0 ? (
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} className="aspect-[4/5] rounded-2xl bg-neutral-100" />
+              ))}
+            </div>
+          ) : count > 0 ? (
+            <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {studentBoughtCoursesList.map((course) => (
+                <li key={course.courseId || course.id}>
+                  <PurchasedCourseCard course={course} showDetailsLink />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <Panel className="flex flex-col items-center px-6 py-16 text-center">
+              <span className="flex h-12 w-12 items-center justify-center rounded-full border border-[#E5E5E5] bg-[#FAFAFA]">
+                <BookOpen className="h-5 w-5 text-[#0A0A0A]" aria-hidden="true" />
+              </span>
+              <h2 className="mt-4 text-xl font-bold tracking-tight text-[#171717]">No courses yet</h2>
+              <p className="mt-2 max-w-sm text-sm text-neutral-600">
+                Browse the catalogue and enroll in your first course to start learning.
+              </p>
+              <Button className={cn(btnPrimary, "mt-6 h-10")} onClick={() => navigate("/courses")}>
+                Browse courses
+              </Button>
+            </Panel>
+          )}
+        </div>
+      </PageContainer>
     </div>
   );
 }
