@@ -6,57 +6,57 @@
 
 @layer base {
   :root {
-    --background: 45 33% 97%;
-    --foreground: 168 24% 14%;
+    --background: 0 0% 98%;
+    --foreground: 0 0% 4%;
     --card: 0 0% 100%;
-    --card-foreground: 168 24% 14%;
+    --card-foreground: 0 0% 4%;
     --popover: 0 0% 100%;
-    --popover-foreground: 168 24% 14%;
-    --primary: 166 64% 29%;
+    --popover-foreground: 0 0% 4%;
+    --primary: 0 0% 4%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 36 92% 57%;
-    --secondary-foreground: 168 24% 14%;
-    --muted: 45 22% 93%;
-    --muted-foreground: 168 10% 43%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 4%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
     --accent: 12 82% 63%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
-    --border: 42 19% 85%;
-    --input: 42 19% 85%;
-    --ring: 166 64% 29%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 0% 4%;
     --radius: 0.625rem;
-    --chart-1: 166 64% 29%;
-    --chart-2: 12 82% 63%;
-    --chart-3: 36 92% 57%;
-    --chart-4: 197 65% 45%;
-    --chart-5: 274 41% 54%;
-    --lms-teal: #176b5f;
-    --lms-coral: #e8755e;
-    --lms-gold: #f5b83d;
-    --lms-ink: #1b302d;
+    --chart-1: 0 0% 4%;
+    --chart-2: 0 0% 25%;
+    --chart-3: 0 0% 45%;
+    --chart-4: 0 0% 64%;
+    --chart-5: 0 0% 83%;
+    --lms-teal: #0a0a0a;
+    --lms-coral: #525252;
+    --lms-gold: #a3a3a3;
+    --lms-ink: #0a0a0a;
   }
 
   .dark {
-    --background: 240 10% 4%;
+    --background: 0 0% 4%;
     --foreground: 0 0% 98%;
-    --card: 240 8% 8%;
+    --card: 0 0% 8%;
     --card-foreground: 0 0% 98%;
-    --popover: 240 8% 8%;
+    --popover: 0 0% 8%;
     --popover-foreground: 0 0% 98%;
-    --primary: 243 75% 59%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 262 83% 58%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 4%;
+    --secondary: 0 0% 15%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 240 6% 14%;
-    --muted-foreground: 240 5% 65%;
-    --accent: 189 94% 43%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 64%;
+    --accent: 0 0% 15%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 62% 30%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 6% 18%;
-    --input: 240 6% 18%;
-    --ring: 243 75% 59%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 0 0% 83%;
   }
 }
 
@@ -83,15 +83,15 @@
 @layer components {
   .lms-gradient-hero {
     background:
-      radial-gradient(ellipse 70% 45% at 15% 0%, rgba(245, 184, 61, 0.2), transparent),
-      radial-gradient(ellipse 65% 45% at 100% 10%, rgba(232, 117, 94, 0.16), transparent),
-      radial-gradient(ellipse 55% 35% at 50% 100%, rgba(23, 107, 95, 0.1), transparent),
+      radial-gradient(ellipse 70% 45% at 15% 0%, rgba(10, 10, 10, 0.04), transparent),
+      radial-gradient(ellipse 65% 45% at 100% 10%, rgba(10, 10, 10, 0.03), transparent),
+      radial-gradient(ellipse 55% 35% at 50% 100%, rgba(10, 10, 10, 0.04), transparent),
       hsl(var(--background));
   }
 
   .lms-gradient-text {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, #176b5f 0%, #e8755e 100%);
+    background-image: linear-gradient(135deg, #0a0a0a 0%, #525252 100%);
   }
 
   .lms-glass-card {
@@ -103,7 +103,7 @@
   }
 
   .lms-btn-primary {
-    @apply bg-[#176B5F] text-white shadow-lg shadow-teal-900/15 transition-all duration-200 hover:bg-[#12574D] hover:shadow-teal-900/25 active:scale-[0.98];
+    @apply bg-[#0A0A0A] text-white shadow-lg shadow-neutral-900/15 transition-all duration-200 hover:bg-[#262626] hover:shadow-neutral-900/25 active:scale-[0.98];
   }
 
   .lms-nav-link {
@@ -113,7 +113,7 @@
   .lms-nav-link-active { @apply text-primary; }
   .lms-nav-link-active::after { content: ""; @apply absolute -bottom-4 left-0 right-0 h-0.5 rounded-full bg-primary; }
   .lms-section-kicker { @apply text-xs font-bold uppercase tracking-[0.18em] text-primary; }
-  .lms-page-heading { @apply text-3xl font-bold tracking-tight text-[#1B302D] md:text-4xl; }
+  .lms-page-heading { @apply text-3xl font-bold tracking-tight text-[#171717] md:text-4xl; }
   .lms-input { @apply h-11 rounded-md border-border bg-white shadow-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary; }
 
   .lms-stat-card {

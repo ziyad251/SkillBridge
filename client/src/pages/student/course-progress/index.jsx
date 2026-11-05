@@ -169,10 +169,10 @@ function StudentViewCourseProgressPage({
     : 0;
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-[#090D0E] text-white">
+    <div className="flex min-h-[100dvh] flex-col bg-[#0A0A0A] text-white">
       {showConfetti && <Confetti />}
 
-      <header className="sticky top-0 z-50 flex min-h-16 shrink-0 items-center justify-between gap-3 border-b border-white/10 bg-[#111819]/95 px-3 backdrop-blur md:px-6">
+      <header className="sticky top-0 z-50 flex min-h-16 shrink-0 items-center justify-between gap-3 border-b border-white/10 bg-[#171717]/95 px-3 backdrop-blur md:px-6">
         <div className="flex min-w-0 flex-1 items-center gap-2 md:gap-4">
           <Button
             type="button"
@@ -185,7 +185,7 @@ function StudentViewCourseProgressPage({
             <span className="hidden sm:inline">My Courses</span>
           </Button>
           <div className="min-w-0">
-            <p className="hidden text-[10px] font-bold uppercase tracking-[0.2em] text-[#6ED0BE] sm:block">Now learning</p>
+            <p className="hidden text-[10px] font-bold uppercase tracking-[0.2em] text-[#D4D4D4] sm:block">Now learning</p>
             <h1 className="truncate text-sm font-semibold md:text-base">
               {studentCurrentCourseProgress?.courseDetails?.title || "Course learning"}
             </h1>
@@ -194,7 +194,7 @@ function StudentViewCourseProgressPage({
         <div className="flex shrink-0 items-center gap-3">
           <div className="hidden text-right sm:block">
             <p className="text-xs text-white/55">Course progress</p>
-            <p className="text-sm font-semibold text-[#F5B83D]">{courseProgressPercent}% complete</p>
+            <p className="text-sm font-semibold text-white">{courseProgressPercent}% complete</p>
           </div>
           <Button
             type="button"
@@ -210,7 +210,7 @@ function StudentViewCourseProgressPage({
 
       <div className="mx-auto flex w-full max-w-[1600px] flex-1 flex-col lg:flex-row">
         <main className="min-w-0 flex-1">
-          <div className="flex justify-center border-b border-white/10 bg-[#050707] p-3 md:p-6">
+          <div className="flex justify-center border-b border-white/10 bg-[#050505] p-3 md:p-6">
             <div className="aspect-video w-full max-w-5xl overflow-hidden rounded-lg border border-white/10 bg-black shadow-2xl shadow-black/40">
               <VideoPlayer
                 key={currentLecture?._id || "no-lecture"}
@@ -221,10 +221,10 @@ function StudentViewCourseProgressPage({
               />
             </div>
           </div>
-          <div className="border-b border-white/10 bg-[#111819] px-4 py-5 md:px-8">
+          <div className="border-b border-white/10 bg-[#171717] px-4 py-5 md:px-8">
             <div className="mx-auto flex max-w-5xl items-start justify-between gap-4">
               <div>
-                <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#E8755E]">Current lecture</p>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-neutral-400">Current lecture</p>
                 <h2 className="text-lg font-bold md:text-2xl">
                   {currentLecture?.title || "Course Lecture"}
                 </h2>
@@ -232,7 +232,7 @@ function StudentViewCourseProgressPage({
               <div className="hidden min-w-40 text-right sm:block">
                 <p className="text-xs text-white/55">{completedLectureCount} of {curriculum.length} lectures</p>
                 <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
-                  <div className="h-full rounded-full bg-[#F5B83D] transition-all" style={{ width: `${courseProgressPercent}%` }} />
+                  <div className="h-full rounded-full bg-white transition-all" style={{ width: `${courseProgressPercent}%` }} />
                 </div>
               </div>
             </div>
@@ -241,18 +241,18 @@ function StudentViewCourseProgressPage({
 
         <aside
           className={cn(
-            "w-full border-t border-white/10 bg-[#111819] lg:w-[380px] lg:shrink-0 lg:border-l lg:border-t-0 xl:w-[410px]",
+            "w-full border-t border-white/10 bg-[#171717] lg:w-[380px] lg:shrink-0 lg:border-l lg:border-t-0 xl:w-[410px]",
             isSideBarOpen ? "block" : "hidden lg:block"
           )}
         >
           <div className="border-b border-white/10 px-5 py-5">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#6ED0BE]">Course content</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#D4D4D4]">Course content</p>
             <div className="mt-2 flex items-end justify-between gap-3">
               <h2 className="text-lg font-bold">Your learning path</h2>
-              <span className="text-sm font-semibold text-[#F5B83D]">{courseProgressPercent}%</span>
+              <span className="text-sm font-semibold text-white">{courseProgressPercent}%</span>
             </div>
             <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
-              <div className="h-full rounded-full bg-[#F5B83D] transition-all" style={{ width: `${courseProgressPercent}%` }} />
+              <div className="h-full rounded-full bg-white transition-all" style={{ width: `${courseProgressPercent}%` }} />
             </div>
           </div>
 
@@ -289,12 +289,12 @@ function StudentViewCourseProgressPage({
                         className={cn(
                           "flex w-full items-start gap-3 rounded-md border border-transparent px-3 py-3 text-left text-sm transition-colors",
                           isActive
-                            ? "border-[#176B5F]/50 bg-[#176B5F]/20 text-[#8BE2D0]"
+                            ? "border-white/30 bg-white/10 text-[#E5E5E5]"
                             : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
                         )}
                       >
                         {isViewed ? (
-                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-neutral-300" />
                         ) : (
                           <Play className="mt-0.5 h-4 w-4 shrink-0" />
                         )}
@@ -341,8 +341,8 @@ function StudentViewCourseProgressPage({
             <DialogDescription className="flex flex-col gap-4 mt-4">
               <div>
                 <Label className="text-base">You have successfully completed this course</Label>
-                <div className="mt-3 p-3 bg-green-50 rounded">
-                  <p className="text-sm font-medium text-green-700">Progress: 100%</p>
+                <div className="mt-3 p-3 bg-neutral-100 rounded">
+                  <p className="text-sm font-medium text-neutral-800">Progress: 100%</p>
                 </div>
               </div>
               <div className="flex flex-col gap-2">

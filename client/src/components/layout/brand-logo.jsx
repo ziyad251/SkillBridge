@@ -15,18 +15,18 @@ function BrandLogo({ to = "/", className, showText = true, tone = "dark" }) {
     >
       <span
         className={cn(
-          "flex h-9 w-9 items-center justify-center rounded-xl shadow-md shadow-teal-900/20 transition-transform duration-200 group-hover:scale-105",
-          light ? "bg-white" : "bg-[#176B5F]"
+          "flex h-9 w-9 items-center justify-center rounded-xl shadow-md shadow-neutral-900/20 transition-transform duration-200 group-hover:scale-105",
+          light ? "bg-white" : "bg-[#0A0A0A]"
         )}
       >
-        <GraduationCap className={cn("h-5 w-5", light ? "text-[#176B5F]" : "text-white")} aria-hidden="true" />
+        <GraduationCap className={cn("h-5 w-5", light ? "text-[#0A0A0A]" : "text-white")} aria-hidden="true" />
       </span>
       {showText ? (
         <span
-          className={cn("text-base md:text-lg", light ? "text-white" : "text-[#1B302D]")}
+          className={cn("text-base md:text-lg", light ? "text-white" : "text-[#171717]")}
           style={{ fontFamily: "'Space Grotesk', sans-serif" }}
         >
-          Skill<span className={light ? "text-teal-200" : "text-[#176B5F]"}>Bridge</span>
+          Skill<span className={light ? "text-neutral-300" : "text-neutral-500"}>Bridge</span>
         </span>
       ) : null}
     </Link>

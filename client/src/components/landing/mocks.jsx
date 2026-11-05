@@ -62,7 +62,7 @@ export function MockFrame({ title, icon: Icon, badge, children, className, inner
         <div className="mb-3 flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2 text-xs font-semibold text-slate-700">
             {Icon ? (
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#176B5F]/10 text-[#176B5F]">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#0A0A0A]/10 text-[#0A0A0A]">
                 <Icon className="h-3.5 w-3.5" />
               </span>
             ) : null}
@@ -84,7 +84,7 @@ function ProgressBar({ value, className, barClassName }) {
   return (
     <div className={cn("h-2 w-full overflow-hidden rounded-full bg-slate-100", className)}>
       <motion.div
-        className={cn("h-full rounded-full bg-[#176B5F]", barClassName)}
+        className={cn("h-full rounded-full bg-[#0A0A0A]", barClassName)}
         initial={false}
         animate={{ width: `${value}%` }}
         transition={{ duration: 0.7, ease: "easeInOut" }}
@@ -111,7 +111,7 @@ export function CourseBuilderMock({ className }) {
         <span
           className={cn(
             "rounded-full px-2 py-0.5 text-[10px] font-semibold transition-colors",
-            published ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"
+            published ? "bg-neutral-100 text-neutral-800" : "bg-slate-100 text-slate-500"
           )}
         >
           {published ? "Published" : "Building"}
@@ -130,7 +130,7 @@ export function CourseBuilderMock({ className }) {
                 {i + 1}
               </span>
               <span className="min-w-0 flex-1 truncate text-xs font-medium text-slate-700">{lesson}</span>
-              <Video className="h-3.5 w-3.5 shrink-0 text-[#176B5F]" />
+              <Video className="h-3.5 w-3.5 shrink-0 text-[#0A0A0A]" />
             </motion.div>
           ))}
         </AnimatePresence>
@@ -150,7 +150,7 @@ export function CheckoutMock({ className, active = true }) {
   return (
     <MockFrame innerRef={ref} className={className} title="Checkout" icon={Lock}>
       <div className="flex items-center gap-3 rounded-lg bg-slate-50 p-2.5">
-        <div className="h-10 w-14 shrink-0 rounded-md bg-gradient-to-br from-[#176B5F] to-[#2a9d8f]" />
+        <div className="h-10 w-14 shrink-0 rounded-md bg-gradient-to-br from-[#0A0A0A] to-[#404040]" />
         <div className="min-w-0 flex-1 space-y-1.5">
           <Line className="w-4/5 bg-slate-300" />
           <Line className="w-1/2" />
@@ -162,7 +162,7 @@ export function CheckoutMock({ className, active = true }) {
             <motion.div
               key="pay"
               {...pop}
-              className="flex h-10 items-center justify-center gap-2 rounded-lg bg-[#176B5F] text-xs font-semibold text-white"
+              className="flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0A0A0A] text-xs font-semibold text-white"
             >
               {step === 1 ? (
                 <>
@@ -176,7 +176,7 @@ export function CheckoutMock({ className, active = true }) {
             <motion.div
               key="done"
               {...pop}
-              className="flex h-10 items-center justify-center gap-2 rounded-lg bg-emerald-50 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200"
+              className="flex h-10 items-center justify-center gap-2 rounded-lg bg-neutral-50 text-xs font-semibold text-neutral-800 ring-1 ring-neutral-200"
             >
               <CheckCircle2 className="h-4 w-4" /> Payment successful
             </motion.div>
@@ -218,7 +218,7 @@ export function VideoProgressMock({ className, active = true }) {
                 animate={{ scale: done ? [1, 1.2, 1] : 1 }}
                 className={cn(
                   "flex h-4 w-4 shrink-0 items-center justify-center rounded-full",
-                  done ? "bg-emerald-500 text-white" : "border border-slate-300"
+                  done ? "bg-neutral-800 text-white" : "border border-slate-300"
                 )}
               >
                 {done ? <CheckCircle2 className="h-4 w-4" /> : null}
@@ -243,23 +243,23 @@ export function CertificateMock({ className, active = true }) {
     <MockFrame innerRef={ref} className={className} title="Course progress" icon={Award}>
       <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500">
         <span>Completed lectures</span>
-        <span className="tabular-nums text-[#176B5F]">{progress}%</span>
+        <span className="tabular-nums text-[#0A0A0A]">{progress}%</span>
       </div>
-      <ProgressBar value={progress} className="mt-1.5" barClassName={progress === 100 ? "bg-emerald-500" : undefined} />
+      <ProgressBar value={progress} className="mt-1.5" barClassName={progress === 100 ? "bg-neutral-800" : undefined} />
       <div className="mt-3 h-[76px]">
         <AnimatePresence mode="wait" initial={false}>
           {issued ? (
             <motion.div
               key="cert"
               {...pop}
-              className="flex h-full items-center gap-3 rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 to-white p-3"
+              className="flex h-full items-center gap-3 rounded-xl border border-neutral-200 bg-gradient-to-br from-neutral-50 to-white p-3"
             >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-800">
                 <BadgeCheck className="h-5 w-5" />
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-bold text-slate-800">Certificate issued</p>
-                <p className="mt-0.5 flex items-center gap-1 text-[10px] font-medium text-[#176B5F]">
+                <p className="mt-0.5 flex items-center gap-1 text-[10px] font-medium text-[#0A0A0A]">
                   <Download className="h-3 w-3" /> Download PDF
                 </p>
               </div>
@@ -305,7 +305,7 @@ export function ReviewsMock({ className }) {
       <div className="mt-2 h-6">
         <AnimatePresence initial={false}>
           {posted ? (
-            <motion.p {...pop} className="flex items-center gap-1 text-xs font-semibold text-emerald-700">
+            <motion.p {...pop} className="flex items-center gap-1 text-xs font-semibold text-neutral-800">
               <CheckCircle2 className="h-3.5 w-3.5" /> Review posted
             </motion.p>
           ) : null}
@@ -328,7 +328,7 @@ export function InstructorDashboardMock({ className }) {
         {BARS.map((h, i) => (
           <motion.div
             key={i}
-            className="flex-1 rounded-t bg-[#176B5F]"
+            className="flex-1 rounded-t bg-[#0A0A0A]"
             style={{ opacity: 0.45 + i * 0.1 }}
             initial={false}
             animate={{ height: step === 0 ? "12%" : `${h}%` }}
@@ -347,7 +347,7 @@ export function InstructorDashboardMock({ className }) {
       <div className="mt-2 h-6">
         <AnimatePresence initial={false}>
           {step === 2 ? (
-            <motion.p {...pop} className="flex items-center gap-1 text-xs font-semibold text-[#176B5F]">
+            <motion.p {...pop} className="flex items-center gap-1 text-xs font-semibold text-[#0A0A0A]">
               <CheckCircle2 className="h-3.5 w-3.5" /> New student enrolled
             </motion.p>
           ) : null}
@@ -379,13 +379,13 @@ export function BrowseMock({ className, active = true }) {
             transition={{ duration: 0.35, delay: i * 0.08 }}
             className={cn(
               "rounded-lg border p-1.5 transition-shadow",
-              step === 3 && i === 1 ? "border-[#176B5F] shadow-md ring-2 ring-[#176B5F]/20" : "border-slate-200"
+              step === 3 && i === 1 ? "border-[#0A0A0A] shadow-md ring-2 ring-[#0A0A0A]/20" : "border-slate-200"
             )}
           >
             <div
               className={cn(
                 "aspect-video rounded-md",
-                ["bg-gradient-to-br from-teal-200 to-teal-400", "bg-gradient-to-br from-[#176B5F] to-teal-500", "bg-gradient-to-br from-slate-200 to-slate-300"][i]
+                ["bg-gradient-to-br from-neutral-200 to-neutral-400", "bg-gradient-to-br from-[#0A0A0A] to-neutral-600", "bg-gradient-to-br from-slate-200 to-slate-300"][i]
               )}
             />
             <Line className="mt-1.5 w-full bg-slate-300" />
@@ -396,7 +396,7 @@ export function BrowseMock({ className, active = true }) {
       <div className="mt-3 h-8">
         <AnimatePresence initial={false}>
           {step === 3 ? (
-            <motion.div {...pop} className="flex h-8 items-center justify-center rounded-lg bg-[#176B5F] text-xs font-semibold text-white">
+            <motion.div {...pop} className="flex h-8 items-center justify-center rounded-lg bg-[#0A0A0A] text-xs font-semibold text-white">
               View course details
             </motion.div>
           ) : null}
@@ -415,11 +415,11 @@ export function HeroDashboardMock() {
 
   return (
     <MockFrame className="p-5">
-      <div className="relative flex aspect-[16/8] items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-[#176B5F] via-[#1d7f71] to-[#2a9d8f]">
+      <div className="relative flex aspect-[16/8] items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-[#0A0A0A] via-[#171717] to-[#404040]">
         <div className="absolute -right-6 -top-10 h-32 w-32 rounded-full bg-white/10" />
         <div className="absolute -bottom-12 left-6 h-28 w-28 rounded-full bg-white/10" />
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg">
-          <Play className="ml-0.5 h-5 w-5 fill-[#176B5F] text-[#176B5F]" />
+          <Play className="ml-0.5 h-5 w-5 fill-[#0A0A0A] text-[#0A0A0A]" />
         </div>
       </div>
       <div className="mt-4 flex items-center justify-between gap-3">
@@ -427,13 +427,13 @@ export function HeroDashboardMock() {
           <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Now learning</p>
           <Line className="h-2.5 w-40 max-w-full bg-slate-300" />
         </div>
-        <span className="shrink-0 rounded-full bg-[#176B5F]/10 px-2.5 py-1 text-[11px] font-semibold text-[#176B5F]">
+        <span className="shrink-0 rounded-full bg-[#0A0A0A]/10 px-2.5 py-1 text-[11px] font-semibold text-[#0A0A0A]">
           Lecture 3 of 4
         </span>
       </div>
       <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-100">
         <motion.div
-          className="h-full rounded-full bg-[#176B5F]"
+          className="h-full rounded-full bg-[#0A0A0A]"
           initial={{ width: reduced ? "72%" : "8%" }}
           animate={{ width: "72%" }}
           transition={{ duration: 1.6, delay: 0.4, ease: "easeOut" }}
@@ -445,7 +445,7 @@ export function HeroDashboardMock() {
             <span
               className={cn(
                 "flex h-5 w-5 shrink-0 items-center justify-center rounded-full",
-                i < 2 ? "bg-emerald-500 text-white" : i === 2 ? "bg-[#176B5F] text-white" : "border border-slate-300"
+                i < 2 ? "bg-neutral-800 text-white" : i === 2 ? "bg-[#0A0A0A] text-white" : "border border-slate-300"
               )}
             >
               {i < 2 ? <CheckCircle2 className="h-5 w-5" /> : i === 2 ? <Play className="h-2.5 w-2.5 fill-white" /> : null}

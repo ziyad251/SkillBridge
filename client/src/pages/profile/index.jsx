@@ -86,7 +86,7 @@ function ProfilePage({ auth, resetCredentials, purchasedCoursesCount = 0 }) {
       <div className="border-b border-border/50 bg-primary/8">
         <div className="mx-auto max-w-4xl px-4 py-10 lg:px-8">
           <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
-            <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-lg bg-[#176B5F] text-2xl font-bold text-white shadow-xl shadow-primary/20">
+            <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-lg bg-[#0A0A0A] text-2xl font-bold text-white shadow-xl shadow-primary/20">
               {initials}
             </div>
             <div className="flex-1 text-center sm:text-left">
@@ -127,7 +127,7 @@ function ProfilePage({ auth, resetCredentials, purchasedCoursesCount = 0 }) {
           {user?.role === "instructor" ? (
             <div className="lms-stat-card">
               <div className="flex items-center gap-3">
-                <BookOpen className="h-8 w-8 text-violet-400" />
+                <BookOpen className="h-8 w-8 text-neutral-700" />
                 <div>
                   <p className="text-2xl font-bold">{stats.created ?? 0}</p>
                   <p className="text-sm text-muted-foreground">Courses Created</p>
@@ -137,7 +137,7 @@ function ProfilePage({ auth, resetCredentials, purchasedCoursesCount = 0 }) {
           ) : null}
           <div className="lms-stat-card">
             <div className="flex items-center gap-3">
-              <Trophy className="h-8 w-8 text-cyan-400" />
+              <Trophy className="h-8 w-8 text-neutral-700" />
               <div>
                 <p className="text-2xl font-bold">{stats.completed}</p>
                 <p className="text-sm text-muted-foreground">Completed Courses</p>

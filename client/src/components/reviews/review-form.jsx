@@ -76,7 +76,7 @@ export default function ReviewForm({ courseId, auth, onReviewSubmitted }) {
       </div>
 
       {error && <div className="text-sm text-red-500 bg-red-50 p-2 rounded">{error}</div>}
-      {success && <div className="text-sm text-green-500 bg-green-50 p-2 rounded">{success}</div>}
+      {success && <div className="text-sm text-neutral-800 bg-neutral-50 p-2 rounded">{success}</div>}
 
       <Button
         type="submit"

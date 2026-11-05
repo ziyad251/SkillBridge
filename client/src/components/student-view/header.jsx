@@ -72,7 +72,7 @@ function StudentViewCommonHeader({ resetCredentials, auth }) {
                 size="sm"
                 className="gap-2 border-border/60 pl-1.5 pr-2 transition-all hover:border-primary/40"
               >
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#176B5F] text-xs font-bold text-white">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#0A0A0A] text-xs font-bold text-white">
                   {initials}
                 </span>
                 <span className="hidden max-w-[120px] truncate md:inline">

@@ -79,8 +79,8 @@ function PublicNavbar() {
               to={link.to}
               aria-current={isActive(link) ? "page" : undefined}
               className={cn(
-                "rounded-full px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-[#176B5F]/5 hover:text-[#176B5F]",
-                isActive(link) && "text-[#176B5F]"
+                "rounded-full px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-[#0A0A0A]/5 hover:text-[#0A0A0A]",
+                isActive(link) && "text-[#0A0A0A]"
               )}
             >
               {link.label}
@@ -97,7 +97,7 @@ function PublicNavbar() {
             <>
               <Button
                 variant="ghost"
-                className="hidden rounded-full text-[#1B302D] sm:inline-flex"
+                className="hidden rounded-full text-[#171717] sm:inline-flex"
                 onClick={() => navigate("/auth")}
               >
                 Log in
@@ -128,7 +128,7 @@ function PublicNavbar() {
               aria-current={isActive(link) ? "page" : undefined}
               className={cn(
                 "block rounded-lg px-3 py-2.5 text-sm font-semibold",
-                isActive(link) ? "bg-[#176B5F]/10 text-[#176B5F]" : "text-[#1B302D] hover:bg-muted"
+                isActive(link) ? "bg-[#0A0A0A]/10 text-[#0A0A0A]" : "text-[#171717] hover:bg-muted"
               )}
             >
               {link.label}

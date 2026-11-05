@@ -179,7 +179,7 @@ function StudentViewCourseDetailsPage({
           email: auth?.user?.userEmail || "",
         },
         theme: {
-          color: "#111827",
+          color: "#0A0A0A",
         },
       };
 
@@ -252,7 +252,7 @@ function StudentViewCourseDetailsPage({
 
   return (
     <div className="mx-auto max-w-7xl overflow-x-hidden p-4 lg:p-8">
-      <div className="rounded-lg bg-[#1B302D] p-6 text-white shadow-lg shadow-[#176B5F]/10 md:p-8">
+      <div className="rounded-lg bg-[#171717] p-6 text-white shadow-lg shadow-[#0A0A0A]/10 md:p-8">
         <h1 className="text-3xl font-bold mb-4">
           {studentViewCourseDetails?.title}
         </h1>
@@ -290,7 +290,7 @@ function StudentViewCourseDetailsPage({
                   .split(",")
                   .map((objective, index) => (
                     <li key={index} className="flex items-start">
-                      <CheckCircle className="mr-2 h-5 w-5 text-green-500" />
+                      <CheckCircle className="mr-2 h-5 w-5 text-neutral-800" />
                       <span>{objective}</span>
                     </li>
                   ))}
@@ -356,7 +356,7 @@ function StudentViewCourseDetailsPage({
 
         {/* SIDEBAR */}
         <aside className="w-full shrink-0 lg:w-[380px] xl:w-[400px]">
-          <Card className="sticky top-20 border-border/60 bg-white shadow-lg shadow-[#176B5F]/10">
+          <Card className="sticky top-20 border-border/60 bg-white shadow-lg shadow-[#0A0A0A]/10">
             <CardContent className="p-6">
               <div className="aspect-video w-full overflow-hidden rounded-lg bg-black">
                 <VideoPlayer

@@ -25,7 +25,7 @@ const HIGHLIGHTS = [
 function DemoSection() {
   return (
     <div className="space-y-3">
-      <DemoButton variant="outline" className="h-11 w-full rounded-lg border-[#176B5F]/30 font-semibold text-[#176B5F] hover:bg-[#176B5F]/5 hover:text-[#176B5F]">
+      <DemoButton variant="outline" className="h-11 w-full rounded-lg border-[#0A0A0A]/30 font-semibold text-[#0A0A0A] hover:bg-[#0A0A0A]/5 hover:text-[#0A0A0A]">
         Try demo (no sign-up)
       </DemoButton>
       <div className="flex items-center gap-3 text-xs uppercase tracking-wider text-slate-400">
@@ -77,7 +77,7 @@ function AuthPage({
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 lg:flex-row">
       {/* Brand panel (desktop) */}
-      <aside className="relative hidden w-[44%] max-w-[640px] flex-col justify-between overflow-hidden bg-[#176B5F] p-10 text-white lg:flex xl:p-14">
+      <aside className="relative hidden w-[44%] max-w-[640px] flex-col justify-between overflow-hidden bg-[#0A0A0A] p-10 text-white lg:flex xl:p-14">
         <div aria-hidden="true" className="absolute -left-24 -top-24 h-80 w-80 rounded-full bg-white/10" />
         <div aria-hidden="true" className="absolute -bottom-32 -right-20 h-96 w-96 rounded-full bg-white/[0.06]" />
 
@@ -92,7 +92,7 @@ function AuthPage({
           <ul className="mt-8 space-y-3">
             {HIGHLIGHTS.map((item) => (
               <li key={item} className="flex items-center gap-3 text-white/90">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white text-[#176B5F]">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white text-[#0A0A0A]">
                   <Check className="h-3 w-3" strokeWidth={3} aria-hidden="true" />
                 </span>
                 {item}
@@ -115,7 +115,7 @@ function AuthPage({
           </div>
           <Link
             to="/"
-            className="inline-flex items-center gap-1.5 rounded-md text-sm font-medium text-slate-600 transition-colors hover:text-[#176B5F]"
+            className="inline-flex items-center gap-1.5 rounded-md text-sm font-medium text-slate-600 transition-colors hover:text-[#0A0A0A]"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             Back to home
@@ -137,7 +137,7 @@ function AuthPage({
             <TabsContent value="signin">
               <Card className="mt-4 rounded-2xl border-slate-200/80 bg-white shadow-[0_16px_40px_-20px_rgba(15,23,42,0.25)]">
                 <CardHeader className="space-y-1.5">
-                  <CardTitle className="text-2xl text-[#1B302D]">Welcome back</CardTitle>
+                  <CardTitle className="text-2xl text-[#171717]">Welcome back</CardTitle>
                   <CardDescription>Sign in to continue learning.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-5">
@@ -150,8 +150,8 @@ function AuthPage({
                     isButtonDisabled={!checkIfSignInFormIsValid()}
                     handleSubmit={handleLoginUser}
                   />
-                  <p className="flex items-start gap-2 rounded-lg bg-[#176B5F]/5 px-3 py-2.5 text-xs text-slate-600">
-                    <Info className="mt-px h-3.5 w-3.5 shrink-0 text-[#176B5F]" aria-hidden="true" />
+                  <p className="flex items-start gap-2 rounded-lg bg-[#0A0A0A]/5 px-3 py-2.5 text-xs text-slate-600">
+                    <Info className="mt-px h-3.5 w-3.5 shrink-0 text-[#0A0A0A]" aria-hidden="true" />
                     <span>
                       Demo account: <span className="font-semibold text-slate-800">{DEMO_CREDENTIALS.userEmail}</span>
                     </span>
@@ -163,7 +163,7 @@ function AuthPage({
             <TabsContent value="signup">
               <Card className="mt-4 rounded-2xl border-slate-200/80 bg-white shadow-[0_16px_40px_-20px_rgba(15,23,42,0.25)]">
                 <CardHeader className="space-y-1.5">
-                  <CardTitle className="text-2xl text-[#1B302D]">Create your account</CardTitle>
+                  <CardTitle className="text-2xl text-[#171717]">Create your account</CardTitle>
                   <CardDescription>It&apos;s free. Or skip sign-up and try the demo.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-5">

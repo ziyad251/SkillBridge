@@ -196,8 +196,8 @@ function Reveal({ children, className, delay = 0, as = "div" }) {
 function SectionHeading({ kicker, title, description, id }) {
   return (
     <Reveal className="mx-auto max-w-2xl text-center">
-      <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#176B5F]">{kicker}</p>
-      <h2 id={id} className="mt-3 text-3xl font-bold tracking-tight text-[#1B302D] sm:text-4xl">
+      <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#0A0A0A]">{kicker}</p>
+      <h2 id={id} className="mt-3 text-3xl font-bold tracking-tight text-[#171717] sm:text-4xl">
         {title}
       </h2>
       {description ? <p className="mt-4 text-base text-slate-600 sm:text-lg">{description}</p> : null}
@@ -235,7 +235,7 @@ function Hero() {
     <section aria-labelledby="hero-title" className="relative">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_60%_50%_at_80%_20%,rgba(23,107,95,0.10),transparent),radial-gradient(ellipse_50%_40%_at_10%_0%,rgba(23,107,95,0.06),transparent)]"
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_60%_50%_at_80%_20%,rgba(10,10,10,0.10),transparent),radial-gradient(ellipse_50%_40%_at_10%_0%,rgba(10,10,10,0.06),transparent)]"
       />
       <div className="mx-auto grid max-w-7xl items-center gap-14 px-4 pb-20 pt-12 sm:pt-16 lg:grid-cols-[1.05fr_1fr] lg:gap-10 lg:px-8 lg:pb-28 lg:pt-24">
         <div className="text-center lg:text-left">
@@ -243,7 +243,7 @@ function Hero() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="inline-flex items-center gap-2 rounded-full border border-[#176B5F]/20 bg-[#176B5F]/5 px-3.5 py-1.5 text-xs font-semibold text-[#176B5F] sm:text-sm"
+            className="inline-flex items-center gap-2 rounded-full border border-[#0A0A0A]/20 bg-[#0A0A0A]/5 px-3.5 py-1.5 text-xs font-semibold text-[#0A0A0A] sm:text-sm"
           >
             <BookOpenCheck className="h-4 w-4" aria-hidden="true" />
             A full-stack learning platform
@@ -254,11 +254,11 @@ function Hero() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.05 }}
-            className="mt-6 text-4xl font-bold leading-[1.08] tracking-tight text-[#1B302D] sm:text-5xl lg:text-[2.75rem] xl:text-[3.4rem]"
+            className="mt-6 text-4xl font-bold leading-[1.08] tracking-tight text-[#171717] sm:text-5xl lg:text-[2.75rem] xl:text-[3.4rem]"
           >
             Learn job-ready skills.
             <br />
-            <span className="text-[#176B5F]">Track every step.</span>
+            <span className="text-[#0A0A0A]">Track every step.</span>
           </motion.h1>
 
           <motion.p
@@ -288,7 +288,7 @@ function Hero() {
             <DemoButton
               variant="outline"
               size="lg"
-              className="h-12 rounded-full border-slate-300 px-7 text-base text-[#1B302D]"
+              className="h-12 rounded-full border-slate-300 px-7 text-base text-[#171717]"
             >
               Try the demo (no sign-up)
             </DemoButton>
@@ -302,7 +302,7 @@ function Hero() {
           >
             {["One-click demo account", "Razorpay test mode", "Free to explore"].map((item) => (
               <li key={item} className="flex items-center gap-1.5">
-                <Check className="h-4 w-4 text-[#176B5F]" aria-hidden="true" />
+                <Check className="h-4 w-4 text-[#0A0A0A]" aria-hidden="true" />
                 {item}
               </li>
             ))}
@@ -317,18 +317,18 @@ function Hero() {
         >
           <div
             aria-hidden="true"
-            className="absolute inset-6 -z-10 rounded-[2rem] bg-[#176B5F]/10 blur-2xl"
+            className="absolute inset-6 -z-10 rounded-[2rem] bg-[#0A0A0A]/10 blur-2xl"
           />
           <HeroDashboardMock />
 
           <FloatingBadge className="-left-1 top-6 sm:-left-4" delay={0.7}>
-            <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Lesson completed
+            <CheckCircle2 className="h-4 w-4 text-neutral-800" /> Lesson completed
           </FloatingBadge>
           <FloatingBadge className="-right-1 top-[46%] sm:-right-4" delay={1.0} floatOffset={8}>
-            <TrendingUp className="h-4 w-4 text-[#176B5F]" /> Progress 72%
+            <TrendingUp className="h-4 w-4 text-[#0A0A0A]" /> Progress 72%
           </FloatingBadge>
           <FloatingBadge className="-bottom-5 left-4 sm:left-10" delay={1.3}>
-            <BadgeCheck className="h-4 w-4 text-amber-500" /> Certificate ready
+            <BadgeCheck className="h-4 w-4 text-neutral-800" /> Certificate ready
           </FloatingBadge>
         </motion.div>
       </div>
@@ -344,7 +344,7 @@ function CapabilityMarquee() {
     >
       {CAPABILITIES.map((item) => (
         <li key={item} className="flex items-center whitespace-nowrap px-5 text-sm font-semibold text-slate-600 sm:text-base">
-          <span className="mr-5 h-1.5 w-1.5 rounded-full bg-[#176B5F]/50" aria-hidden="true" />
+          <span className="mr-5 h-1.5 w-1.5 rounded-full bg-[#0A0A0A]/50" aria-hidden="true" />
           {item}
         </li>
       ))}
@@ -412,23 +412,23 @@ function HowItWorks() {
                     aria-current={isActive ? "step" : undefined}
                     aria-controls="how-preview"
                     className={cn(
-                      "group relative flex w-full gap-4 overflow-hidden rounded-2xl border p-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#176B5F] focus-visible:ring-offset-2 sm:p-5",
+                      "group relative flex w-full gap-4 overflow-hidden rounded-2xl border p-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0A0A0A] focus-visible:ring-offset-2 sm:p-5",
                       isActive
-                        ? "border-[#176B5F]/30 bg-white shadow-[0_10px_30px_-12px_rgba(23,107,95,0.35)]"
+                        ? "border-[#0A0A0A]/30 bg-white shadow-[0_10px_30px_-12px_rgba(10,10,10,0.35)]"
                         : "border-transparent hover:border-slate-200 hover:bg-slate-50"
                     )}
                   >
                     <span
                       className={cn(
                         "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold transition-colors",
-                        isActive ? "bg-[#176B5F] text-white" : "bg-slate-100 text-slate-500 group-hover:text-[#176B5F]"
+                        isActive ? "bg-[#0A0A0A] text-white" : "bg-slate-100 text-slate-500 group-hover:text-[#0A0A0A]"
                       )}
                     >
                       {index + 1}
                     </span>
                     <span className="min-w-0">
-                      <span className="flex items-center gap-2 font-semibold text-[#1B302D]">
-                        <Icon className={cn("h-4 w-4", isActive ? "text-[#176B5F]" : "text-slate-400")} aria-hidden="true" />
+                      <span className="flex items-center gap-2 font-semibold text-[#171717]">
+                        <Icon className={cn("h-4 w-4", isActive ? "text-[#0A0A0A]" : "text-slate-400")} aria-hidden="true" />
                         {step.title}
                       </span>
                       <span className={cn("mt-1 block text-sm text-slate-600", !isActive && "hidden sm:block")}>
@@ -439,7 +439,7 @@ function HowItWorks() {
                       <motion.span
                         key={`bar-${active}`}
                         aria-hidden="true"
-                        className="absolute bottom-0 left-0 h-0.5 bg-[#176B5F]"
+                        className="absolute bottom-0 left-0 h-0.5 bg-[#0A0A0A]"
                         initial={{ width: "0%" }}
                         animate={{ width: "100%" }}
                         transition={{ duration: STEP_DURATION / 1000, ease: "linear" }}
@@ -454,12 +454,12 @@ function HowItWorks() {
           <div
             id="how-preview"
             aria-live="polite"
-            className="relative flex min-h-[340px] items-center justify-center overflow-hidden rounded-3xl bg-gradient-to-br from-[#176B5F]/10 via-[#176B5F]/5 to-slate-50 p-6 sm:min-h-[380px] sm:p-10"
+            className="relative flex min-h-[340px] items-center justify-center overflow-hidden rounded-3xl bg-gradient-to-br from-[#0A0A0A]/10 via-[#0A0A0A]/5 to-slate-50 p-6 sm:min-h-[380px] sm:p-10"
           >
             <span className="sr-only">
               Step {active + 1}: {STEPS[active].title}
             </span>
-            <div aria-hidden="true" className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[#176B5F]/10" />
+            <div aria-hidden="true" className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[#0A0A0A]/10" />
             <AnimatePresence mode="wait">
               <motion.div
                 key={active}
@@ -494,15 +494,15 @@ function Features() {
           {FEATURES.map(({ icon: Icon, title, description, Mock }, index) => (
             <Reveal as="li" key={title} delay={(index % 3) * 0.08} className="flex">
               <article className="flex w-full flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm transition-shadow duration-300 hover:shadow-[0_16px_40px_-16px_rgba(15,23,42,0.2)]">
-                <div className="flex flex-1 items-center justify-center bg-gradient-to-b from-[#176B5F]/[0.06] to-transparent px-6 pb-4 pt-6">
+                <div className="flex flex-1 items-center justify-center bg-gradient-to-b from-[#0A0A0A]/[0.06] to-transparent px-6 pb-4 pt-6">
                   <Mock className="max-w-[18rem]" />
                 </div>
                 <div className="p-6 pt-4">
                   <div className="flex items-center gap-2.5">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#176B5F]/10 text-[#176B5F]">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0A0A0A]/10 text-[#0A0A0A]">
                       <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
                     </span>
-                    <h3 className="text-lg font-semibold text-[#1B302D]">{title}</h3>
+                    <h3 className="text-lg font-semibold text-[#171717]">{title}</h3>
                   </div>
                   <p className="mt-3 text-sm leading-relaxed text-slate-600">{description}</p>
                 </div>
@@ -532,19 +532,19 @@ function RoleComparison() {
               className={cn(
                 "rounded-3xl border p-7 sm:p-9",
                 index === 0
-                  ? "border-[#176B5F]/20 bg-[#176B5F] text-white"
-                  : "border-slate-200 bg-white text-[#1B302D]"
+                  ? "border-[#0A0A0A]/20 bg-[#0A0A0A] text-white"
+                  : "border-slate-200 bg-white text-[#171717]"
               )}
             >
               <span
                 className={cn(
                   "flex h-11 w-11 items-center justify-center rounded-xl",
-                  index === 0 ? "bg-white/15 text-white" : "bg-[#176B5F]/10 text-[#176B5F]"
+                  index === 0 ? "bg-white/15 text-white" : "bg-[#0A0A0A]/10 text-[#0A0A0A]"
                 )}
               >
                 <Icon className="h-5 w-5" aria-hidden="true" />
               </span>
-              <h3 className={cn("mt-5 text-2xl font-bold", index === 0 ? "text-white" : "text-[#1B302D]")}>{title}</h3>
+              <h3 className={cn("mt-5 text-2xl font-bold", index === 0 ? "text-white" : "text-[#171717]")}>{title}</h3>
               <p className={cn("mt-2 text-sm", index === 0 ? "text-white/80" : "text-slate-600")}>{intro}</p>
               <ul className="mt-6 space-y-3">
                 {points.map((point) => (
@@ -552,7 +552,7 @@ function RoleComparison() {
                     <span
                       className={cn(
                         "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full",
-                        index === 0 ? "bg-white text-[#176B5F]" : "bg-[#176B5F] text-white"
+                        index === 0 ? "bg-white text-[#0A0A0A]" : "bg-[#0A0A0A] text-white"
                       )}
                     >
                       <Check className="h-3 w-3" strokeWidth={3} aria-hidden="true" />
@@ -582,7 +582,7 @@ function Faq() {
                 value={`item-${index}`}
                 className={index === FAQS.length - 1 ? "border-b-0" : "border-slate-200"}
               >
-                <AccordionTrigger className="text-base text-[#1B302D]">{faq.q}</AccordionTrigger>
+                <AccordionTrigger className="text-base text-[#171717]">{faq.q}</AccordionTrigger>
                 <AccordionContent className="text-[15px] leading-relaxed text-slate-600">{faq.a}</AccordionContent>
               </AccordionItem>
             ))}
@@ -598,7 +598,7 @@ function FinalCta() {
 
   return (
     <section aria-labelledby="cta-title" className="px-4 py-20 sm:py-24 lg:px-8">
-      <Reveal className="relative mx-auto max-w-5xl overflow-hidden rounded-[2rem] bg-[#176B5F] px-6 py-14 text-center sm:px-12 sm:py-16">
+      <Reveal className="relative mx-auto max-w-5xl overflow-hidden rounded-[2rem] bg-[#0A0A0A] px-6 py-14 text-center sm:px-12 sm:py-16">
         <div aria-hidden="true" className="absolute -left-20 -top-20 h-64 w-64 rounded-full bg-white/10" />
         <div aria-hidden="true" className="absolute -bottom-24 -right-16 h-72 w-72 rounded-full bg-white/[0.07]" />
         <h2 id="cta-title" className="relative text-3xl font-bold tracking-tight text-white sm:text-4xl">
@@ -611,14 +611,14 @@ function FinalCta() {
           <DemoButton
             variant="secondary"
             size="lg"
-            className="h-12 rounded-full bg-white px-7 text-base font-semibold text-[#176B5F] shadow-lg hover:bg-white/90 focus-visible:ring-white focus-visible:ring-offset-[#176B5F]"
+            className="h-12 rounded-full bg-white px-7 text-base font-semibold text-[#0A0A0A] shadow-lg hover:bg-white/90 focus-visible:ring-white focus-visible:ring-offset-[#0A0A0A]"
           >
             Try the demo
           </DemoButton>
           <Button
             variant="ghost"
             size="lg"
-            className="h-12 rounded-full border border-white/40 px-7 text-base text-white hover:bg-white/10 hover:text-white focus-visible:ring-white focus-visible:ring-offset-[#176B5F]"
+            className="h-12 rounded-full border border-white/40 px-7 text-base text-white hover:bg-white/10 hover:text-white focus-visible:ring-white focus-visible:ring-offset-[#0A0A0A]"
             onClick={() => navigate("/auth?tab=signup")}
           >
             Create an account
@@ -651,7 +651,7 @@ function Footer() {
           <ul className="grid grid-cols-2 gap-x-10 gap-y-3 text-sm sm:flex sm:flex-wrap sm:gap-x-8">
             {links.map((link) => (
               <li key={link.label}>
-                <Link to={link.to} className="rounded text-slate-600 transition-colors hover:text-[#176B5F]">
+                <Link to={link.to} className="rounded text-slate-600 transition-colors hover:text-[#0A0A0A]">
                   {link.label}
                 </Link>
               </li>
@@ -668,7 +668,7 @@ function Footer() {
             href={GITHUB_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded font-medium text-slate-600 transition-colors hover:text-[#176B5F]"
+            className="inline-flex items-center gap-2 rounded font-medium text-slate-600 transition-colors hover:text-[#0A0A0A]"
           >
             <Github className="h-4 w-4" aria-hidden="true" />
             ziyad251/SkillBridge
@@ -697,7 +697,7 @@ function LandingPage() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="min-h-screen overflow-x-clip bg-white text-[#1B302D]">
+      <div className="min-h-screen overflow-x-clip bg-white text-[#171717]">
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-md focus:bg-white focus:px-4 focus:py-2 focus:shadow-lg"

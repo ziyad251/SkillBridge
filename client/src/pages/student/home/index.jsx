@@ -124,7 +124,7 @@ function StudentHomePage({
 
     <div className="lms-page-shell">
 
-      <section className="border-b border-border/50 bg-[#176B5F]/8">
+      <section className="border-b border-border/50 bg-[#0A0A0A]/8">
 
         <div className="mx-auto max-w-7xl px-4 py-10 lg:px-8">
 
@@ -162,7 +162,7 @@ function StudentHomePage({
 
             <div className="lms-stat-card">
 
-              <p className="text-2xl font-bold text-violet-400">
+              <p className="text-2xl font-bold text-neutral-700">
 
                 {studentViewCoursesList?.length || 0}
 
@@ -174,7 +174,7 @@ function StudentHomePage({
 
             <div className="lms-stat-card">
 
-              <p className="text-2xl font-bold text-cyan-400">
+              <p className="text-2xl font-bold text-neutral-700">
 
                 <TrendingUp className="mb-1 inline h-5 w-5" />
 
