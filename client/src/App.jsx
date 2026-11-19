@@ -16,6 +16,7 @@ import LandingPage from "./pages/landing";
 import ProfilePage from "./pages/profile";
 import { Skeleton } from "@/components/ui/skeleton";
 import { initialSignInFormData, initialSignUpFormData } from "@/config";
+import { Analytics } from "@vercel/analytics/react"
 import {
   checkAuthService,
   fetchStudentBoughtCoursesService,
@@ -376,6 +377,7 @@ function App() {
         />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      <Analytics />
     </AuthContext.Provider>
   );
 }
